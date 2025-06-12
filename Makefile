@@ -17,7 +17,7 @@ LINT_CMD=golangci-lint
 BINARY_NAME=gopiq
 BINARY_UNIX=$(BINARY_NAME)_unix
 
-.PHONY: all build test cover lint clean help
+.PHONY: all build test cover lint clean help docs-serve docs-build
 
 all: build
 
@@ -46,6 +46,15 @@ lint:
 	@echo "Running linter..."
 	@$(LINT_CMD) run
 
+# Docs commands
+docs-serve:
+	@echo "Serving documentation at http://127.0.0.1:8000"
+	@python3 -m venv venv && source venv/bin/activate && pip install -r docs/requirements.txt && mkdocs serve -f docs/mkdocs.yml
+
+docs-build:
+	@echo "Building documentation..."
+	@python3 -m venv venv && source venv/bin/activate && pip install -r docs/requirements.txt && mkdocs build -f docs/mkdocs.yml
+
 # Clean command
 clean:
 	@echo "Cleaning up..."
@@ -62,6 +71,8 @@ help:
 	@echo "  cover         Run tests and generate a coverage profile"
 	@echo "  cover-html    Open the HTML coverage report in a browser"
 	@echo "  lint          Run the golangci-lint linter"
+	@echo "  docs-serve    Serve the documentation site locally"
+	@echo "  docs-build    Build the documentation site"
 	@echo "  clean         Clean up build artifacts and coverage files"
 	@echo "  help          Show this help message"
 

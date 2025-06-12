@@ -53,4 +53,11 @@ Thumbs.db
 *.pprof
 
 # Documentation build artifacts
+docs/_build/
+
+# MkDocs generated files
+site/
+docs/mkdocs.yml.bak
+
+# Documentation build artifacts
 docs/_build/ 

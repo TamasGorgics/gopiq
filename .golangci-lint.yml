@@ -1,0 +1,283 @@
+# .golangci-lint.yml
+# golangci-lint configuration for gopiq - High-Performance Image Processing Library
+# Tailored for Go 1.24, thread-safe concurrent code, and performance optimizations
+
+version: "2"
+
+run:
+  # Timeout for analysis, required for large image processing operations
+  timeout: 5m
+  
+  # Number of OS threads for golangci-lint
+  concurrency: 4
+  
+  # Exit code when at least one issue was found
+  issues-exit-code: 1
+  
+  # Include test files in linting (important for image processing accuracy)
+  tests: true
+  
+  # Use Go version from go.mod
+  go: "1.24"
+  
+  # Skip vendor and generated files
+  skip-dirs:
+    - vendor
+  
+  # Allow multiple parallel golangci-lint instances
+  allow-parallel-runners: false
+
+linters:
+  enable:
+    # Core Go linters
+    - errcheck          # Checks for unchecked errors (critical for image processing)
+    - gosimple          # Simplifies code
+    - govet             # Reports suspicious constructs
+    - ineffassign       # Detects unused assignments
+    - staticcheck       # Advanced static analysis
+    - typecheck         # Type checking
+    - unused            # Checks for unused constants, variables, functions
+    
+    # Performance-critical for image processing
+    - prealloc          # Finds slice declarations that could be pre-allocated
+    - unconvert         # Removes unnecessary type conversions
+    - wastedassign      # Finds wasted assignment statements
+    - perfsprint        # Checks for fmt.Sprintf alternatives
+    
+    # Memory and resource management (crucial for image processing)
+    - bodyclose         # Checks HTTP response body closure
+    - rowserrcheck      # Checks sql.Rows error handling
+    - sqlclosecheck     # Checks sql.Rows and sql.Stmt closure
+    - makezero          # Finds slice declarations with non-zero initial length
+    
+    # Security linters
+    - gosec             # Security-focused linting
+    - nakedret          # Finds naked returns in long functions
+    
+    # Concurrency and thread-safety (essential for thread-safe library)
+    - copyloopvar       # Detects loop variable copying (Go 1.22+)
+    - noctx             # Finds HTTP requests without context
+    
+    # Code quality and style
+    - asciicheck        # Checks for non-ASCII identifiers
+    - bidichk           # Checks for dangerous unicode sequences
+    - gofmt             # Checks code formatting
+    - gofumpt           # Stricter formatting than gofmt
+    - goimports         # Checks import formatting and grouping
+    - misspell          # Finds misspelled words
+    - whitespace        # Detects whitespace issues
+    - godot             # Checks comment punctuation
+    
+    # Error handling (critical for image processing chains)
+    - errname           # Checks error naming conventions
+    - errorlint         # Finds error wrapping issues
+    - nilerr            # Finds nil error returns
+    - nilnil            # Checks for nil error and nil value returns
+    
+    # Documentation and comments
+    - revive            # Fast, configurable linter (replaces golint)
+    - stylecheck        # Checks style issues
+    
+    # Code complexity (important for maintainability)
+    - cyclop            # Checks cyclomatic complexity
+    - funlen            # Checks function length
+    - gocognit          # Checks cognitive complexity
+    - nestif            # Reports deeply nested if statements
+    
+    # Additional useful linters
+    - durationcheck     # Checks for duration multiplication
+    - exhaustive        # Checks switch statement exhaustiveness
+    - forbidigo         # Forbids specific identifiers
+    - goconst           # Finds repeated strings for constants
+    - gocritic          # Comprehensive linter with many checks
+    - godox             # Detects FIXME, TODO comments
+    - nolintlint        # Reports ill-formed nolint directives
+    - predeclared       # Finds shadowed predeclared identifiers
+    - tparallel         # Detects inappropriate t.Parallel() usage
+    - unparam           # Reports unused function parameters
+    
+    # Testing-related
+    - testableexamples  # Checks testable examples
+    - thelper           # Detects test helpers without t.Helper()
+
+  disable:
+    # Disabled linters with reasoning
+    - containedctx      # Allow context in structs for image processing state
+    - gochecknoglobals  # Allow global variables (e.g., rgbaPool)
+    - gochecknoinits    # Allow init functions if needed
+    - interfacebloat    # Allow larger interfaces for comprehensive APIs
+    - lll               # Line length handled by gofmt/goimports
+    - varnamelen        # Allow short variable names in tight loops
+    - wrapcheck         # Too strict for internal error handling
+    - nlreturn          # Too strict formatting requirements
+    - wsl               # Too strict whitespace requirements
+    - exhaustruct       # Too strict for struct initialization
+    - paralleltest      # Not all tests need t.Parallel()
+    - ireturn           # Allow returning interfaces when appropriate
+
+linters-settings:
+  # Performance and complexity limits
+  cyclop:
+    max-complexity: 15
+    package-average: 10.0
+    
+  funlen:
+    lines: 80              # Allow longer functions for image processing algorithms
+    statements: 50
+    
+  gocognit:
+    min-complexity: 15     # Allow reasonable complexity for image algorithms
+    
+  # Error checking configuration
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    exclude-functions:
+      - io/ioutil.ReadFile
+      - io.Copy(*bytes.Buffer)
+      - fmt.Print
+      - fmt.Printf
+      - fmt.Println
+  
+  # Security settings
+  gosec:
+    excludes:
+      - G115 # Integer overflow - handled appropriately in image processing
+    config:
+      G301: "0644"
+      G302: "0644"
+  
+  # Code quality settings
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - experimental
+    disabled-checks:
+      - hugeParam        # Allow large structs for image data
+      - rangeExprCopy    # Acceptable for performance-critical code
+      - rangeValCopy     # Acceptable for performance-critical code
+      - unnamedResult    # Allow unnamed returns for simple functions
+  
+  # Unused parameter checking
+  unparam:
+    check-exported: false  # Don't check exported functions
+  
+  # Import organization
+  goimports:
+    local-prefixes: TamasGorgics/gopiq
+  
+  # Comment formatting
+  godot:
+    scope: declarations
+    exclude:
+      - "^fixme:"
+      - "^todo:"
+      - "^TODO:"
+      - "^FIXME:"
+  
+  # Govet configuration
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment   # Allow non-optimal struct alignment for readability
+      - shadow          # Allow variable shadowing in some cases
+  
+  # Revive configuration for code style
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+        disabled: true    # Handled by unparam
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+issues:
+  # Show all issues
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  # Don't skip anything
+  new: false
+  
+  # Exclude some issues for specific files/cases
+  exclude-rules:
+    # Test files can be more lenient
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - goconst
+        - funlen
+        - gocognit
+        - cyclop
+    
+    # Performance test files have different requirements
+    - path: performance_test\.go
+      linters:
+        - funlen
+        - gocognit
+        - cyclop
+        - godox
+    
+    # Allow magic numbers in color calculations and image dimensions
+    - text: "Magic number: (255|128|100|24|72|0\\.2126|0\\.7152|0\\.0722)"
+      linters:
+        - gomnd
+        - goconst
+    
+    # Allow TODO comments in development
+    - text: "Line contains TODO"
+      linters:
+        - godox
+  
+  exclude-use-default: false
+  
+  # Include these useful rules
+  include:
+    - EXC0002  # Disable excluding of issues about comments from golint
+    - EXC0011  # Include issues about missing package documentation
+    - EXC0012  # Include issues about missing function documentation
+    - EXC0013  # Include issues about missing exported variable documentation
+    - EXC0014  # Include issues about missing exported constant documentation
+    - EXC0015  # Include issues about missing exported type documentation
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
+
+formatters:
+  enable:
+    - goimports
+    - gofumpt
+  
+  settings:
+    goimports:
+      local-prefixes: TamasGorgics/gopiq
+    gofumpt:
+      extra-rules: true
+      module-path: TamasGorgics/gopiq

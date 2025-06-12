@@ -721,3 +721,134 @@ func TestRaceConditionDetection(t *testing.T) {
 
 	wg.Wait()
 }
+
+// --- Performance Optimization Tests ---
+
+func TestGrayscaleFast(t *testing.T) {
+	originalImg := image.NewRGBA(image.Rect(0, 0, 100, 100))
+
+	// Fill with a known pattern
+	for y := 0; y < 100; y++ {
+		for x := 0; x < 100; x++ {
+			originalImg.Set(x, y, color.RGBA{R: 100, G: 150, B: 200, A: 255})
+		}
+	}
+
+	proc := New(originalImg)
+	grayProc := proc.GrayscaleFast()
+
+	if grayProc.Err() != nil {
+		t.Fatalf("GrayscaleFast() should not return an error, got: %v", grayProc.Err())
+	}
+
+	// Verify dimensions are the same
+	if grayProc.currentImage.Bounds() != originalImg.Bounds() {
+		t.Errorf("GrayscaleFast image dimensions mismatch, expected %v, got %v",
+			originalImg.Bounds(), grayProc.currentImage.Bounds())
+	}
+
+	// Verify a pixel is truly grayscale by checking that R=G=B
+	grayPixelColor := grayProc.currentImage.At(50, 50)
+	r, g, b, _ := grayPixelColor.RGBA()
+
+	// In a grayscale image, R, G, and B should be equal
+	if r != g || g != b {
+		t.Errorf("Pixel at (50,50) is not grayscale: R=%d, G=%d, B=%d", r>>8, g>>8, b>>8)
+	}
+}
+
+func TestGrayscaleConsistency(t *testing.T) {
+	// Test that Grayscale() and GrayscaleFast() produce similar results
+	originalImg := createTestImage(200, 150)
+
+	proc1 := New(originalImg)
+	proc2 := New(originalImg)
+
+	grayStandard := proc1.Grayscale()
+	grayFast := proc2.GrayscaleFast()
+
+	if grayStandard.Err() != nil {
+		t.Fatalf("Standard grayscale failed: %v", grayStandard.Err())
+	}
+	if grayFast.Err() != nil {
+		t.Fatalf("Fast grayscale failed: %v", grayFast.Err())
+	}
+
+	// Compare a few pixels to ensure similar results
+	standardImg, _ := grayStandard.Image()
+	fastImg, _ := grayFast.Image()
+
+	for _, point := range []image.Point{{50, 50}, {100, 75}, {150, 100}} {
+		standardColor := standardImg.At(point.X, point.Y)
+		fastColor := fastImg.At(point.X, point.Y)
+
+		sr, sg, sb, sa := standardColor.RGBA()
+		fr, fg, fb, fa := fastColor.RGBA()
+
+		// Colors should be very close (allow small differences due to rounding)
+		if abs(int(sr>>8)-int(fr>>8)) > 1 ||
+			abs(int(sg>>8)-int(fg>>8)) > 1 ||
+			abs(int(sb>>8)-int(fb>>8)) > 1 ||
+			abs(int(sa>>8)-int(fa>>8)) > 1 {
+			t.Errorf("Grayscale methods differ significantly at (%d,%d): standard RGBA(%d,%d,%d,%d) vs fast RGBA(%d,%d,%d,%d)",
+				point.X, point.Y, sr>>8, sg>>8, sb>>8, sa>>8, fr>>8, fg>>8, fb>>8, fa>>8)
+		}
+	}
+}
+
+func TestPerformanceOptions(t *testing.T) {
+	originalImg := createTestImage(100, 100)
+
+	// Test custom performance options
+	opts := PerformanceOptions{
+		MaxGoroutines:            2,
+		EnableParallelProcessing: true,
+		MinSizeForParallel:       5000, // 50x100 = 5000
+	}
+
+	proc := NewWithPerformanceOptions(originalImg, opts)
+	result := proc.GrayscaleFast()
+
+	if result.Err() != nil {
+		t.Fatalf("Performance options test failed: %v", result.Err())
+	}
+
+	// Test SetPerformanceOptions
+	proc2 := New(originalImg)
+	proc2.SetPerformanceOptions(opts)
+	result2 := proc2.GrayscaleFast()
+
+	if result2.Err() != nil {
+		t.Fatalf("SetPerformanceOptions test failed: %v", result2.Err())
+	}
+}
+
+func TestParallelProcessingThreshold(t *testing.T) {
+	// Test that small images use direct processing, large images use parallel
+	smallImg := createTestImage(50, 50)   // 2500 pixels < default threshold
+	largeImg := createTestImage(200, 200) // 40000 pixels > default threshold
+
+	opts := DefaultPerformanceOptions()
+
+	proc1 := NewWithPerformanceOptions(smallImg, opts)
+	proc2 := NewWithPerformanceOptions(largeImg, opts)
+
+	// Both should work regardless of size
+	result1 := proc1.GrayscaleFast()
+	result2 := proc2.GrayscaleFast()
+
+	if result1.Err() != nil {
+		t.Errorf("Small image processing failed: %v", result1.Err())
+	}
+	if result2.Err() != nil {
+		t.Errorf("Large image processing failed: %v", result2.Err())
+	}
+}
+
+// Helper function for absolute difference
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}

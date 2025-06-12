@@ -1,6 +1,7 @@
 # gopiq
 
 [![Go](https://github.com/TamasGorgics/gopiq/actions/workflows/go.yml/badge.svg)](https://github.com/TamasGorgics/gopiq/actions/workflows/go.yml)
+[![codecov](https://codecov.io/gh/TamasGorgics/gopiq/branch/main/graph/badge.svg)](https://codecov.io/gh/TamasGorgics/gopiq)
 [![Go Version](https://img.shields.io/badge/Go-1.24-blue.svg)](https://golang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Report Card](https://goreportcard.com/badge/github.com/TamasGorgics/gopiq)](https://goreportcard.com/report/github.com/TamasGorgics/gopiq)

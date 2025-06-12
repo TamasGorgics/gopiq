@@ -1,0 +1,56 @@
+# Test coverage files
+coverage.out
+coverage.html
+coverage.txt
+*.cover
+*.coverprofile
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+gopiq
+main
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency directories (use `go mod` instead)
+vendor/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Performance test artifacts
+*.prof
+*.pprof
+
+# Documentation build artifacts
+docs/_build/ 

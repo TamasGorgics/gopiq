@@ -3,11 +3,8 @@ package gopiq
 import (
 	"fmt"
 	"image"
-	_ "image/gif" // Register GIF format for decoding
 	"image/jpeg"
-	_ "image/jpeg" // Register JPEG format for decoding
 	"image/png"
-	_ "image/png" // Register PNG format for decoding
 	"io"
 	"strings"
 )

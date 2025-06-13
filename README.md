@@ -31,16 +31,24 @@ package main
 
 import (
     "fmt"
-    "gopiq"
+	"os"
+
+	"github.com/TamasGorgics/gopiq"
 )
 
 func main() {
+    imageData, err := os.ReadFile("img.jpg")
+	if err != nil {
+		fmt.Printf("Error reading image: %v\n", err)
+		return
+	}
+
     // Load and process an image with method chaining
     processor := gopiq.FromBytes(imageData).
         Resize(800, 600).
         Grayscale().
         Crop(100, 100, 400, 300).
-        AddTextWatermark("© 2024", 
+        AddTextWatermark("© 2025",
             gopiq.WithFontSize(24),
             gopiq.WithPosition(gopiq.PositionBottomRight))
     
@@ -56,7 +64,13 @@ func main() {
         return
     }
     
-    // Save or use resultBytes...
+    err = os.WriteFile("output.jpg", resultBytes, 0644)
+	if err != nil {
+		fmt.Printf("Error writing output file: %v\n", err)
+		return
+	}
+
+	fmt.Println("Image processed and saved successfully")
 }
 ```
 

@@ -38,10 +38,10 @@ import (
 
 func main() {
     imageData, err := os.ReadFile("img.jpg")
-	if err != nil {
-		fmt.Printf("Error reading image: %v\n", err)
-		return
-	}
+    if err != nil {
+        fmt.Printf("Error reading image: %v\n", err)
+        return
+    }
 
     // Load and process an image with method chaining
     processor := gopiq.FromBytes(imageData).
@@ -65,12 +65,12 @@ func main() {
     }
     
     err = os.WriteFile("output.jpg", resultBytes, 0644)
-	if err != nil {
-		fmt.Printf("Error writing output file: %v\n", err)
-		return
-	}
+    if err != nil {
+        fmt.Printf("Error writing output file: %v\n", err)
+        return
+    }
 
-	fmt.Println("Image processed and saved successfully")
+    fmt.Println("Image processed and saved successfully")
 }
 ```
 

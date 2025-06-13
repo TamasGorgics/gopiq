@@ -31,9 +31,9 @@ package main
 
 import (
     "fmt"
-	"os"
+    "os"
 
-	"github.com/TamasGorgics/gopiq"
+    "github.com/TamasGorgics/gopiq"
 )
 
 func main() {

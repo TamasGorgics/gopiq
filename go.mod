@@ -1,4 +1,4 @@
-module TamasGorgics/gopiq
+module github.com/TamasGorgics/gopiq
 
 go 1.24.0
 

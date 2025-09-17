@@ -186,7 +186,7 @@ processor := gopiq.New(image).GrayscaleFast()
 - **Optimized method**: 735μs, 1MB allocations (**9.7x faster**)
 - **Parallel method**: 276μs, 1MB allocations (**26x faster**)
 
-### ⚡ Performance Configuration
+### Performance Configuration
 
 ```go
 // Custom performance settings

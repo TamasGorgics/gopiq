@@ -171,7 +171,7 @@ func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
 
 **gopiq** includes advanced performance optimizations that can provide dramatic speed improvements:
 
-### 🚀 Optimized Methods
+### Optimized Methods
 
 #### **GrayscaleFast()** - Parallel Processing
 For large images, use `GrayscaleFast()` instead of `Grayscale()`:
@@ -199,7 +199,7 @@ opts := gopiq.PerformanceOptions{
 processor := gopiq.NewWithPerformanceOptions(image, opts)
 ```
 
-### 📊 Scalability
+### Scalability
 
 **Parallel Processing Performance** (1920x1080 images):
 - 1 goroutine: 5.87ms
@@ -207,7 +207,7 @@ processor := gopiq.NewWithPerformanceOptions(image, opts)
 - 4 goroutines: 1.77ms (**3.3x faster**)
 - 8 goroutines: 1.23ms (**4.8x faster**)
 
-### 🔧 Optimization Techniques
+### Optimization Techniques
 
 1. **Direct Buffer Access**: Bypasses Go's interface overhead
 2. **Parallel Processing**: Utilizes multiple CPU cores automatically
@@ -215,7 +215,7 @@ processor := gopiq.NewWithPerformanceOptions(image, opts)
 4. **SIMD-friendly Operations**: CPU-optimized pixel processing
 5. **ITU-R BT.709 Grayscale**: Professional-grade color conversion
 
-### 💡 Performance Tips
+### Performance Tips
 
 - Use `GrayscaleFast()` for images larger than 100x100 pixels
 - Set `MaxGoroutines` to match your CPU cores for optimal performance

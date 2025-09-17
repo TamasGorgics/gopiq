@@ -2,7 +2,7 @@
 
 **gopiq** includes advanced performance optimizations that can provide dramatic speed improvements.
 
-### 🚀 Optimized Methods
+### Optimized Methods
 
 #### **GrayscaleFast()** - Parallel Processing
 For large images, use `GrayscaleFast()` instead of `Grayscale()`:
@@ -17,7 +17,7 @@ processor := gopiq.New(image).GrayscaleFast()
 - **Optimized method**: 735μs, 1MB allocations (**9.7x faster**)
 - **Parallel method**: 276μs, 1MB allocations (**26x faster**)
 
-### ⚡ Performance Configuration
+### Performance Configuration
 
 ```go
 // Custom performance settings
@@ -30,7 +30,7 @@ opts := gopiq.PerformanceOptions{
 processor := gopiq.NewWithPerformanceOptions(image, opts)
 ```
 
-### 📊 Scalability
+### Scalability
 
 **Parallel Processing Performance** (1920x1080 images):
 - 1 goroutine: 5.87ms
@@ -38,7 +38,7 @@ processor := gopiq.NewWithPerformanceOptions(image, opts)
 - 4 goroutines: 1.77ms (**3.3x faster**)
 - 8 goroutines: 1.23ms (**4.8x faster**)
 
-### 🔧 Optimization Techniques
+### Optimization Techniques
 
 1. **Direct Buffer Access**: Bypasses Go's interface overhead
 2. **Parallel Processing**: Utilizes multiple CPU cores automatically

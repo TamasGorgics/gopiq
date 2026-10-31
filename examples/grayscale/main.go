@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/TamasGorgics/gopiq"
@@ -13,10 +14,15 @@ func main() {
 	fmt.Println("=== Grayscale Conversion Example ===")
 
 	// Read the sample image
-	imageData, err := os.ReadFile("sample_image.png")
+	imageData, err := os.ReadFile("examples/sample_image.png")
 	if err != nil {
 		log.Fatalf("Failed to read sample image: %v", err)
 	}
+	outputDir := filepath.Join("examples", "grayscale", "output")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	outputPath := func(name string) string { return filepath.Join(outputDir, name) }
 
 	// Test regular grayscale conversion
 	fmt.Println("Testing regular grayscale conversion...")
@@ -41,11 +47,11 @@ func main() {
 		log.Fatalf("Failed to convert to bytes: %v", err)
 	}
 
-	err = os.WriteFile("grayscale_regular.png", grayscaleData, 0644)
+	err = os.WriteFile(outputPath("grayscale_regular.png"), grayscaleData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save grayscale image: %v", err)
 	}
-	fmt.Println("✓ Regular grayscale image saved as: grayscale_regular.png")
+	fmt.Printf("✓ Regular grayscale image saved as: %s\n", outputPath("grayscale_regular.png"))
 
 	// Test fast grayscale conversion
 	fmt.Println("\nTesting fast grayscale conversion...")
@@ -70,11 +76,11 @@ func main() {
 		log.Fatalf("Failed to convert to bytes: %v", err)
 	}
 
-	err = os.WriteFile("grayscale_fast.png", fastGrayscaleData, 0644)
+	err = os.WriteFile(outputPath("grayscale_fast.png"), fastGrayscaleData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save fast grayscale image: %v", err)
 	}
-	fmt.Println("✓ Fast grayscale image saved as: grayscale_fast.png")
+	fmt.Printf("✓ Fast grayscale image saved as: %s\n", outputPath("grayscale_fast.png"))
 
 	// Performance comparison
 	fmt.Printf("\nPerformance comparison:\n")
@@ -119,15 +125,15 @@ func main() {
 		log.Fatalf("Failed to convert to bytes: %v", err)
 	}
 
-	err = os.WriteFile("grayscale_custom_perf.png", customGrayscaleData, 0644)
+	err = os.WriteFile(outputPath("grayscale_custom_perf.png"), customGrayscaleData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save custom performance grayscale image: %v", err)
 	}
-	fmt.Println("✓ Custom performance grayscale image saved as: grayscale_custom_perf.png")
+	fmt.Printf("✓ Custom performance grayscale image saved as: %s\n", outputPath("grayscale_custom_perf.png"))
 
 	fmt.Println("\n=== Grayscale Example Complete ===")
 	fmt.Println("Generated files:")
-	fmt.Println("- grayscale_regular.png (standard grayscale conversion)")
-	fmt.Println("- grayscale_fast.png (optimized parallel grayscale conversion)")
-	fmt.Println("- grayscale_custom_perf.png (custom performance options)")
+	fmt.Printf("- %s (standard grayscale conversion)\n", outputPath("grayscale_regular.png"))
+	fmt.Printf("- %s (optimized parallel grayscale conversion)\n", outputPath("grayscale_fast.png"))
+	fmt.Printf("- %s (custom performance options)\n", outputPath("grayscale_custom_perf.png"))
 }

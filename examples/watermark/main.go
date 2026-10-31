@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/TamasGorgics/gopiq"
 )
@@ -13,10 +14,15 @@ func main() {
 	fmt.Println("=== Watermark Example ===")
 
 	// Read the sample image
-	imageData, err := os.ReadFile("sample_image.png")
+	imageData, err := os.ReadFile("examples/sample_image.png")
 	if err != nil {
 		log.Fatalf("Failed to read sample image: %v", err)
 	}
+	outputDir := filepath.Join("examples", "watermark", "output")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	outputPath := func(name string) string { return filepath.Join(outputDir, name) }
 
 	// Create ImageProcessor from bytes
 	processor := gopiq.FromBytes(imageData)
@@ -59,11 +65,11 @@ func main() {
 			log.Fatalf("Failed to convert watermarked image to bytes: %v", err)
 		}
 
-		err = os.WriteFile(p.filename, watermarkedData, 0644)
+		err = os.WriteFile(outputPath(p.filename), watermarkedData, 0644)
 		if err != nil {
 			log.Fatalf("Failed to save watermarked image: %v", err)
 		}
-		fmt.Printf("✓ %s watermark saved as: %s\n", p.name, p.filename)
+		fmt.Printf("✓ %s watermark saved as: %s\n", p.name, outputPath(p.filename))
 	}
 
 	// Example with custom styling
@@ -84,18 +90,18 @@ func main() {
 		log.Fatalf("Failed to convert custom watermarked image to bytes: %v", err)
 	}
 
-	err = os.WriteFile("watermark_custom_style.png", customData, 0644)
+	err = os.WriteFile(outputPath("watermark_custom_style.png"), customData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save custom watermarked image: %v", err)
 	}
-	fmt.Println("✓ Custom style watermark saved as: watermark_custom_style.png")
+	fmt.Printf("✓ Custom style watermark saved as: %s\n", outputPath("watermark_custom_style.png"))
 
 	fmt.Println("\n=== Watermark Example Complete ===")
 	fmt.Println("Generated files:")
-	fmt.Println("- watermark_top_left.png")
-	fmt.Println("- watermark_top_right.png")
-	fmt.Println("- watermark_bottom_left.png")
-	fmt.Println("- watermark_bottom_right.png")
-	fmt.Println("- watermark_center.png")
-	fmt.Println("- watermark_custom_style.png")
+	fmt.Printf("- %s\n", outputPath("watermark_top_left.png"))
+	fmt.Printf("- %s\n", outputPath("watermark_top_right.png"))
+	fmt.Printf("- %s\n", outputPath("watermark_bottom_left.png"))
+	fmt.Printf("- %s\n", outputPath("watermark_bottom_right.png"))
+	fmt.Printf("- %s\n", outputPath("watermark_center.png"))
+	fmt.Printf("- %s\n", outputPath("watermark_custom_style.png"))
 }

@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/TamasGorgics/gopiq"
@@ -15,10 +16,15 @@ func main() {
 	fmt.Println("This example demonstrates all major features of gopiq")
 
 	// Read the sample image
-	imageData, err := os.ReadFile("sample_image.png")
+	imageData, err := os.ReadFile("examples/sample_image.png")
 	if err != nil {
 		log.Fatalf("Failed to read sample image: %v", err)
 	}
+	outputDir := filepath.Join("examples", "comprehensive", "output")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	outputPath := func(name string) string { return filepath.Join(outputDir, name) }
 
 	// Create processor with custom performance options
 	perfOpts := gopiq.PerformanceOptions{
@@ -59,8 +65,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to convert basic result: %v", err)
 	}
-	os.WriteFile("comprehensive_basic.png", basicData, 0644)
-	fmt.Println("✓ Basic operations saved as: comprehensive_basic.png")
+	os.WriteFile(outputPath("comprehensive_basic.png"), basicData, 0644)
+	fmt.Printf("✓ Basic operations saved as: %s\n", outputPath("comprehensive_basic.png"))
 
 	// 2. Watermark with different styles
 	fmt.Println("\n2. Watermark Variations:")
@@ -94,8 +100,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to convert watermark: %v", err)
 		}
-		os.WriteFile(style.filename, watermarkData, 0644)
-		fmt.Printf("✓ %s watermark saved as: %s\n", style.name, style.filename)
+		os.WriteFile(outputPath(style.filename), watermarkData, 0644)
+		fmt.Printf("✓ %s watermark saved as: %s\n", style.name, outputPath(style.filename))
 	}
 
 	// 3. Performance comparison
@@ -108,7 +114,7 @@ func main() {
 	regularTime := time.Since(start)
 
 	regularData, _ := regularProcessor.ToBytes(gopiq.FormatPNG)
-	os.WriteFile("comprehensive_grayscale_regular.png", regularData, 0644)
+	os.WriteFile(outputPath("comprehensive_grayscale_regular.png"), regularData, 0644)
 	fmt.Printf("Regular grayscale: %v\n", regularTime)
 
 	// Fast grayscale
@@ -118,7 +124,7 @@ func main() {
 	fastTime := time.Since(start)
 
 	fastData, _ := fastProcessor.ToBytes(gopiq.FormatPNG)
-	os.WriteFile("comprehensive_grayscale_fast.png", fastData, 0644)
+	os.WriteFile(outputPath("comprehensive_grayscale_fast.png"), fastData, 0644)
 	fmt.Printf("Fast grayscale: %v\n", fastTime)
 
 	if fastTime < regularTime {
@@ -149,8 +155,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to convert pipeline result: %v", err)
 	}
-	os.WriteFile("comprehensive_pipeline.png", pipelineData, 0644)
-	fmt.Println("✓ Complex pipeline saved as: comprehensive_pipeline.png")
+	os.WriteFile(outputPath("comprehensive_pipeline.png"), pipelineData, 0644)
+	fmt.Printf("✓ Complex pipeline saved as: %s\n", outputPath("comprehensive_pipeline.png"))
 
 	// 5. Different output formats
 	fmt.Println("\n5. Different Output Formats:")
@@ -166,16 +172,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to convert to PNG: %v", err)
 	}
-	os.WriteFile("comprehensive_format.png", pngData, 0644)
-	fmt.Println("✓ PNG format saved as: comprehensive_format.png")
+	os.WriteFile(outputPath("comprehensive_format.png"), pngData, 0644)
+	fmt.Printf("✓ PNG format saved as: %s\n", outputPath("comprehensive_format.png"))
 
 	// JPEG format
 	jpegData, err := formatProcessor.ToBytes(gopiq.FormatJPEG)
 	if err != nil {
 		log.Fatalf("Failed to convert to JPEG: %v", err)
 	}
-	os.WriteFile("comprehensive_format.jpg", jpegData, 0644)
-	fmt.Println("✓ JPEG format saved as: comprehensive_format.jpg")
+	os.WriteFile(outputPath("comprehensive_format.jpg"), jpegData, 0644)
+	fmt.Printf("✓ JPEG format saved as: %s\n", outputPath("comprehensive_format.jpg"))
 
 	// 6. Error handling demonstration
 	fmt.Println("\n6. Error Handling Demonstration:")
@@ -219,8 +225,8 @@ func main() {
 		}
 
 		filename := fmt.Sprintf("comprehensive_efficiency_%d.png", i)
-		os.WriteFile(filename, efficiencyData, 0644)
-		fmt.Printf("✓ Efficiency test %d saved as: %s\n", i, filename)
+		os.WriteFile(outputPath(filename), efficiencyData, 0644)
+		fmt.Printf("✓ Efficiency test %d saved as: %s\n", i, outputPath(filename))
 	}
 
 	fmt.Println("\n=== Comprehensive Example Complete ===")
@@ -232,5 +238,5 @@ func main() {
 	fmt.Println("- Different output formats")
 	fmt.Println("- Error handling")
 	fmt.Println("- Memory efficiency")
-	fmt.Println("\nAll output files have been saved in the examples directory.")
+	fmt.Printf("\nAll output files have been saved under %s.\n", outputDir)
 }

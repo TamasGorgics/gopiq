@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/TamasGorgics/gopiq"
 )
@@ -12,10 +13,15 @@ func main() {
 	fmt.Println("=== Crop Example ===")
 
 	// Read the sample image
-	imageData, err := os.ReadFile("sample_image.png")
+	imageData, err := os.ReadFile("examples/sample_image.png")
 	if err != nil {
 		log.Fatalf("Failed to read sample image: %v", err)
 	}
+	outputDir := filepath.Join("examples", "crop", "output")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	outputPath := func(name string) string { return filepath.Join(outputDir, name) }
 
 	// Get original image dimensions
 	originalProcessor := gopiq.FromBytes(imageData)
@@ -76,11 +82,11 @@ func main() {
 			log.Fatalf("Failed to convert cropped image to bytes: %v", err)
 		}
 
-		err = os.WriteFile(scenario.filename, croppedData, 0644)
+		err = os.WriteFile(outputPath(scenario.filename), croppedData, 0644)
 		if err != nil {
 			log.Fatalf("Failed to save cropped image: %v", err)
 		}
-		fmt.Printf("✓ %s saved as: %s\n", scenario.name, scenario.filename)
+		fmt.Printf("✓ %s saved as: %s\n", scenario.name, outputPath(scenario.filename))
 	}
 
 	// Demonstrate chaining operations: crop then resize
@@ -99,11 +105,11 @@ func main() {
 		log.Fatalf("Failed to convert chained result to bytes: %v", err)
 	}
 
-	err = os.WriteFile("crop_chain_resize.png", chainedData, 0644)
+	err = os.WriteFile(outputPath("crop_chain_resize.png"), chainedData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save chained result: %v", err)
 	}
-	fmt.Println("✓ Chained operations (crop + resize) saved as: crop_chain_resize.png")
+	fmt.Printf("✓ Chained operations (crop + resize) saved as: %s\n", outputPath("crop_chain_resize.png"))
 
 	// Demonstrate multiple crops from different areas
 	fmt.Println("\nDemonstrating multiple crops...")
@@ -130,13 +136,13 @@ func main() {
 			}
 
 			filename := fmt.Sprintf("crop_grid_%d_%d.png", row, col)
-			err = os.WriteFile(filename, gridData, 0644)
+			err = os.WriteFile(outputPath(filename), gridData, 0644)
 			if err != nil {
 				log.Fatalf("Failed to save grid cell: %v", err)
 			}
 		}
 	}
-	fmt.Printf("✓ Grid of %dx%d crops saved as crop_grid_*.png\n", gridSize, gridSize)
+	fmt.Printf("✓ Grid of %dx%d crops saved under %s\n", gridSize, gridSize, outputDir)
 
 	// Test error handling with invalid crop parameters
 	fmt.Println("\nTesting error handling...")
@@ -161,15 +167,15 @@ func main() {
 
 	fmt.Println("\n=== Crop Example Complete ===")
 	fmt.Println("Generated files:")
-	fmt.Println("- crop_top_left.png")
-	fmt.Println("- crop_top_right.png")
-	fmt.Println("- crop_bottom_left.png")
-	fmt.Println("- crop_bottom_right.png")
-	fmt.Println("- crop_center_square.png")
-	fmt.Println("- crop_center_rect.png")
-	fmt.Println("- crop_small_detail.png")
-	fmt.Println("- crop_wide_strip.png")
-	fmt.Println("- crop_tall_strip.png")
-	fmt.Println("- crop_chain_resize.png (crop + resize)")
-	fmt.Println("- crop_grid_*.png (4x4 grid of crops)")
+	fmt.Printf("- %s\n", outputPath("crop_top_left.png"))
+	fmt.Printf("- %s\n", outputPath("crop_top_right.png"))
+	fmt.Printf("- %s\n", outputPath("crop_bottom_left.png"))
+	fmt.Printf("- %s\n", outputPath("crop_bottom_right.png"))
+	fmt.Printf("- %s\n", outputPath("crop_center_square.png"))
+	fmt.Printf("- %s\n", outputPath("crop_center_rect.png"))
+	fmt.Printf("- %s\n", outputPath("crop_small_detail.png"))
+	fmt.Printf("- %s\n", outputPath("crop_wide_strip.png"))
+	fmt.Printf("- %s\n", outputPath("crop_tall_strip.png"))
+	fmt.Printf("- %s (crop + resize)\n", outputPath("crop_chain_resize.png"))
+	fmt.Printf("- %s/crop_grid_*.png (4x4 grid of crops)\n", outputDir)
 }

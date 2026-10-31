@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/TamasGorgics/gopiq"
 )
@@ -12,10 +13,15 @@ func main() {
 	fmt.Println("=== Resize Example ===")
 
 	// Read the sample image
-	imageData, err := os.ReadFile("sample_image.png")
+	imageData, err := os.ReadFile("examples/sample_image.png")
 	if err != nil {
 		log.Fatalf("Failed to read sample image: %v", err)
 	}
+	outputDir := filepath.Join("examples", "resize", "output")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	outputPath := func(name string) string { return filepath.Join(outputDir, name) }
 
 	// Get original image dimensions
 	originalProcessor := gopiq.FromBytes(imageData)
@@ -70,11 +76,11 @@ func main() {
 			log.Fatalf("Failed to convert resized image to bytes: %v", err)
 		}
 
-		err = os.WriteFile(scenario.filename, resizedData, 0644)
+		err = os.WriteFile(outputPath(scenario.filename), resizedData, 0644)
 		if err != nil {
 			log.Fatalf("Failed to save resized image: %v", err)
 		}
-		fmt.Printf("✓ %s saved as: %s\n", scenario.name, scenario.filename)
+		fmt.Printf("✓ %s saved as: %s\n", scenario.name, outputPath(scenario.filename))
 	}
 
 	// Demonstrate chaining operations: resize then grayscale
@@ -93,11 +99,11 @@ func main() {
 		log.Fatalf("Failed to convert chained result to bytes: %v", err)
 	}
 
-	err = os.WriteFile("resize_chain_grayscale.png", chainedData, 0644)
+	err = os.WriteFile(outputPath("resize_chain_grayscale.png"), chainedData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save chained result: %v", err)
 	}
-	fmt.Println("✓ Chained operations (resize + grayscale) saved as: resize_chain_grayscale.png")
+	fmt.Printf("✓ Chained operations (resize + grayscale) saved as: %s\n", outputPath("resize_chain_grayscale.png"))
 
 	// Demonstrate aspect ratio preservation
 	fmt.Println("\nDemonstrating aspect ratio calculations...")
@@ -121,21 +127,21 @@ func main() {
 		log.Fatalf("Failed to convert aspect ratio image to bytes: %v", err)
 	}
 
-	err = os.WriteFile("resize_aspect_ratio.png", aspectData, 0644)
+	err = os.WriteFile(outputPath("resize_aspect_ratio.png"), aspectData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save aspect ratio image: %v", err)
 	}
-	fmt.Printf("✓ Aspect ratio preserved resize (%dx%d) saved as: resize_aspect_ratio.png\n",
-		targetWidth, targetHeight)
+	fmt.Printf("✓ Aspect ratio preserved resize (%dx%d) saved as: %s\n",
+		targetWidth, targetHeight, outputPath("resize_aspect_ratio.png"))
 
 	fmt.Println("\n=== Resize Example Complete ===")
 	fmt.Println("Generated files:")
-	fmt.Println("- resize_thumbnail.png (100x75)")
-	fmt.Println("- resize_medium.png (400x300)")
-	fmt.Println("- resize_large.png (1200x900)")
-	fmt.Println("- resize_square.png (500x500)")
-	fmt.Println("- resize_wide.png (800x200)")
-	fmt.Println("- resize_tall.png (200x800)")
-	fmt.Println("- resize_chain_grayscale.png (resize + grayscale)")
-	fmt.Println("- resize_aspect_ratio.png (600x450, maintaining aspect ratio)")
+	fmt.Printf("- %s (100x75)\n", outputPath("resize_thumbnail.png"))
+	fmt.Printf("- %s (400x300)\n", outputPath("resize_medium.png"))
+	fmt.Printf("- %s (1200x900)\n", outputPath("resize_large.png"))
+	fmt.Printf("- %s (500x500)\n", outputPath("resize_square.png"))
+	fmt.Printf("- %s (800x200)\n", outputPath("resize_wide.png"))
+	fmt.Printf("- %s (200x800)\n", outputPath("resize_tall.png"))
+	fmt.Printf("- %s (resize + grayscale)\n", outputPath("resize_chain_grayscale.png"))
+	fmt.Printf("- %s (600x450, maintaining aspect ratio)\n", outputPath("resize_aspect_ratio.png"))
 }

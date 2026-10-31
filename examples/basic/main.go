@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/TamasGorgics/gopiq"
 )
@@ -12,10 +13,15 @@ func main() {
 	fmt.Println("=== Basic Gopiq Example ===")
 
 	// Read the sample image
-	imageData, err := os.ReadFile("sample_image.png")
+	imageData, err := os.ReadFile("examples/sample_image.png")
 	if err != nil {
 		log.Fatalf("Failed to read sample image: %v", err)
 	}
+	outputDir := filepath.Join("examples", "basic", "output")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+	outputPath := func(name string) string { return filepath.Join(outputDir, name) }
 
 	// Create ImageProcessor from bytes
 	processor := gopiq.FromBytes(imageData)
@@ -43,11 +49,11 @@ func main() {
 		log.Fatalf("Failed to convert to bytes: %v", err)
 	}
 
-	err = os.WriteFile("output_grayscale.png", grayscaleData, 0644)
+	err = os.WriteFile(outputPath("output_grayscale.png"), grayscaleData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save grayscale image: %v", err)
 	}
-	fmt.Println("✓ Grayscale image saved as: output_grayscale.png")
+	fmt.Printf("✓ Grayscale image saved as: %s\n", outputPath("output_grayscale.png"))
 
 	// Resize the image
 	processor.Resize(400, 300)
@@ -61,11 +67,11 @@ func main() {
 		log.Fatalf("Failed to convert resized image to bytes: %v", err)
 	}
 
-	err = os.WriteFile("output_resized.png", resizedData, 0644)
+	err = os.WriteFile(outputPath("output_resized.png"), resizedData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save resized image: %v", err)
 	}
-	fmt.Println("✓ Resized image saved as: output_resized.png")
+	fmt.Printf("✓ Resized image saved as: %s\n", outputPath("output_resized.png"))
 
 	// Chain operations: crop a portion of the image
 	processor.Crop(50, 50, 200, 150)
@@ -79,15 +85,15 @@ func main() {
 		log.Fatalf("Failed to convert cropped image to bytes: %v", err)
 	}
 
-	err = os.WriteFile("output_cropped.png", croppedData, 0644)
+	err = os.WriteFile(outputPath("output_cropped.png"), croppedData, 0644)
 	if err != nil {
 		log.Fatalf("Failed to save cropped image: %v", err)
 	}
-	fmt.Println("✓ Cropped image saved as: output_cropped.png")
+	fmt.Printf("✓ Cropped image saved as: %s\n", outputPath("output_cropped.png"))
 
 	fmt.Println("\n=== Basic Example Complete ===")
 	fmt.Println("Generated files:")
-	fmt.Println("- output_grayscale.png (grayscale version)")
-	fmt.Println("- output_resized.png (400x300 resized version)")
-	fmt.Println("- output_cropped.png (cropped 200x150 portion)")
+	fmt.Printf("- %s (grayscale version)\n", outputPath("output_grayscale.png"))
+	fmt.Printf("- %s (400x300 resized version)\n", outputPath("output_resized.png"))
+	fmt.Printf("- %s (cropped 200x150 portion)\n", outputPath("output_cropped.png"))
 }

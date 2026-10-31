@@ -1059,7 +1059,7 @@
 <li>has clear, testable format and concurrency guarantees; and</li>
 <li>makes performance claims only when supported by reproducible measurements.</li>
 </ul>
-<p>The existing API and Go 1.24 minimum are retained unless a later versioned change explicitly revises them.</p>
+<p>The Go 1.27.0 minimum is part of this specification. The CI matrix checks that minimum and the latest supported Go 1.27 patch release.</p>
 <h2 id="2-audit-baseline-and-resolution-status">2. Audit baseline and resolution status<a class="headerlink" href="#2-audit-baseline-and-resolution-status" title="Permanent link">&para;</a></h2>
 <p>The initial audit found the following gaps. M0–M2 have resolved the first four listed items; the rest remain assigned to later milestones.</p>
 <ul>
@@ -1134,7 +1134,7 @@
 <li><strong>Q-3:</strong> Timing comparisons belong in Go benchmarks or a separately invoked performance tool, not ordinary unit tests. Unit tests must not depend on machine speed.</li>
 <li><strong>Q-4:</strong> Benchmark results must include enough environment and workload detail to be reproduced. Documentation must not present old measurements as universal guarantees.</li>
 <li><strong>Q-5:</strong> Pooling or SIMD optimizations may be claimed only when the implementation uses them and reproducible benchmarks demonstrate a benefit. Otherwise, unused pool code and unsupported claims should be removed.</li>
-<li><strong>Q-6:</strong> The supported Go-version policy must be explicit. CI must test the module's declared minimum (currently Go 1.24) and, when selected, the latest supported stable version.</li>
+<li><strong>Q-6:</strong> The supported Go-version policy must be explicit. CI must test the module's declared minimum (currently Go 1.27.0) and the latest supported stable patch release in that Go line.</li>
 </ul>
 <h2 id="4-planned-extensions">4. Planned extensions<a class="headerlink" href="#4-planned-extensions" title="Permanent link">&para;</a></h2>
 <p>These are not prerequisites for the correctness milestones above; they are future capabilities to consider and scope separately.</p>

@@ -24,8 +24,8 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Test
-      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+    - name: Test and collect library coverage
+      run: go test -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq ./...
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5

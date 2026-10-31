@@ -980,10 +980,10 @@
 
 
 <h1 id="gopiq-roadmap">gopiq Roadmap<a class="headerlink" href="#gopiq-roadmap" title="Permanent link">&para;</a></h1>
-<p>This roadmap turns the <a href="../specification/">specification</a> into ordered, verifiable milestones. It is dependency-ordered, not calendar-based; no dates or delivery estimates are implied. All milestones are currently <strong>Planned</strong>.</p>
+<p>This roadmap turns the <a href="../specification/">specification</a> into ordered, verifiable milestones. It is dependency-ordered, not calendar-based; no dates or delivery estimates are implied. Milestones are <strong>Planned</strong> unless marked <strong>Complete</strong>.</p>
 <h2 id="milestones">Milestones<a class="headerlink" href="#milestones" title="Permanent link">&para;</a></h2>
 <h3 id="m0-make-the-repository-buildable">M0 — Make the repository buildable<a class="headerlink" href="#m0-make-the-repository-buildable" title="Permanent link">&para;</a></h3>
-<p><strong>Priority:</strong> P0 · <strong>Requirements:</strong> BLD-1–BLD-3</p>
+<p><strong>Status:</strong> Complete · <strong>Priority:</strong> P0 · <strong>Requirements:</strong> BLD-1–BLD-3</p>
 <ul>
 <li>Move each standalone example into an independently buildable package/directory, or use an equivalent layout that avoids duplicate <code>main</code> functions.</li>
 <li>Correct example asset paths and run instructions after reorganizing.</li>
@@ -992,7 +992,7 @@
 </ul>
 <p><strong>Exit criteria:</strong> <code>go build ./...</code> and <code>go test ./...</code> both complete successfully, and each documented example can be built independently.</p>
 <h3 id="m1-correct-core-image-processing-and-guard-edge-cases">M1 — Correct core image processing and guard edge cases<a class="headerlink" href="#m1-correct-core-image-processing-and-guard-edge-cases" title="Permanent link">&para;</a></h3>
-<p><strong>Priority:</strong> P1 · <strong>Requirements:</strong> IMG-1–IMG-5, GRAY-1–GRAY-5, SAFE-1–SAFE-3</p>
+<p><strong>Status:</strong> Complete · <strong>Priority:</strong> P1 · <strong>Requirements:</strong> IMG-1–IMG-5, GRAY-1–GRAY-5, SAFE-1–SAFE-3</p>
 <ul>
 <li>Fix parallel grayscale indexing for non-zero-origin bounds and subimages.</li>
 <li>Handle empty images and performance-option edge cases without zero-worker division or invalid pixel access.</li>
@@ -1002,7 +1002,7 @@
 </ul>
 <p><strong>Exit criteria:</strong> Regression tests cover zero-origin and non-zero-origin images, subimages, empty bounds, alpha, and invalid/overflowing dimensions; invalid inputs report chain errors rather than arithmetic-driven panics.</p>
 <h3 id="m2-make-watermark-and-format-behavior-match-the-api">M2 — Make watermark and format behavior match the API<a class="headerlink" href="#m2-make-watermark-and-format-behavior-match-the-api" title="Permanent link">&para;</a></h3>
-<p><strong>Priority:</strong> P1 · <strong>Requirements:</strong> WM-1–WM-5, FMT-1–FMT-4</p>
+<p><strong>Status:</strong> Complete · <strong>Priority:</strong> P1 · <strong>Requirements:</strong> WM-1–WM-5, FMT-1–FMT-4</p>
 <ul>
 <li>Implement <code>WithFontPath</code> and deterministic font-source option ordering.</li>
 <li>Validate nil/invalid watermark options and calculate all positions relative to image bounds.</li>

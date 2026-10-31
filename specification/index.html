@@ -683,10 +683,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-baseline-gaps" class="md-nav__link">
+  <a href="#2-audit-baseline-and-resolution-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Baseline gaps
+        2. Audit baseline and resolution status
       
     </span>
   </a>
@@ -893,10 +893,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-baseline-gaps" class="md-nav__link">
+  <a href="#2-audit-baseline-and-resolution-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Baseline gaps
+        2. Audit baseline and resolution status
       
     </span>
   </a>
@@ -1060,16 +1060,16 @@
 <li>makes performance claims only when supported by reproducible measurements.</li>
 </ul>
 <p>The existing API and Go 1.24 minimum are retained unless a later versioned change explicitly revises them.</p>
-<h2 id="2-baseline-gaps">2. Baseline gaps<a class="headerlink" href="#2-baseline-gaps" title="Permanent link">&para;</a></h2>
-<p>The following are known discrepancies between the current implementation and the target below:</p>
+<h2 id="2-audit-baseline-and-resolution-status">2. Audit baseline and resolution status<a class="headerlink" href="#2-audit-baseline-and-resolution-status" title="Permanent link">&para;</a></h2>
+<p>The initial audit found the following gaps. M0–M2 have resolved the first four listed items; the rest remain assigned to later milestones.</p>
 <ul>
-<li><code>go test -short .</code> passes, but <code>go test -short ./...</code> fails because multiple standalone examples declare <code>main</code> in the same package. The workflow also builds <code>./...</code>.</li>
-<li><code>WithFontPath</code> is exposed but watermark rendering does not load a font from that path.</li>
-<li>Parallel grayscale indexing assumes zero-origin coordinates; some non-zero-origin bounds can produce invalid pixel indexes. Empty images can also reach a zero-worker division for certain performance options.</li>
-<li><code>Clone</code> is described as a deep copy in Go documentation but shares the image pointer; tests and concurrency docs currently expect shallow sharing.</li>
-<li>GIF is described as decodable, but the package does not register the GIF decoder itself.</li>
-<li>The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims that the implementation does not substantiate.</li>
-<li><code>TestPerformanceComparison</code> performs timing work as a regular test despite having no performance assertion.</li>
+<li><strong>Resolved in M0:</strong> Standalone examples previously redeclared <code>main</code> in one package, breaking <code>go build ./...</code> and <code>go test ./...</code>; they now build independently.</li>
+<li><strong>Resolved in M1:</strong> Parallel grayscale previously mishandled non-zero-origin bounds, and empty images or unsafe dimensions could reach invalid operations.</li>
+<li><strong>Resolved in M2:</strong> <code>WithFontPath</code> previously had no effect; font-source ordering and option validation are now implemented.</li>
+<li><strong>Resolved in M2:</strong> GIF was described as decodable but its decoder was not registered by the library.</li>
+<li><strong>Open for M3:</strong> <code>Clone</code> is described as a deep copy in Go documentation but shares the image pointer; tests and concurrency docs expect shallow sharing.</li>
+<li><strong>Open for M4:</strong> The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims the implementation does not substantiate.</li>
+<li><strong>Open for M4:</strong> <code>TestPerformanceComparison</code> performs timing work as a regular test despite having no performance assertion.</li>
 </ul>
 <h2 id="3-requirements">3. Requirements<a class="headerlink" href="#3-requirements" title="Permanent link">&para;</a></h2>
 <h3 id="31-build-examples-and-documentation">3.1 Build, examples, and documentation<a class="headerlink" href="#31-build-examples-and-documentation" title="Permanent link">&para;</a></h3>
@@ -1099,7 +1099,7 @@
 <ul>
 <li><strong>WM-1:</strong> Font-source options are applied in order: the last supplied <code>WithFontPath</code> or <code>WithFontBytes</code> option selects the source. With neither option, the embedded Go font is used.</li>
 <li><strong>WM-2:</strong> <code>WithFontPath</code> must load and parse the requested file. File-read, parse, and face-construction failures must be returned through the processor error chain.</li>
-<li><strong>WM-3:</strong> Empty text, a nil option, a nil color, a non-finite or non-positive font size, non-finite offsets, and an unknown position must produce a processor error rather than a panic or silent fallback. Negative finite offsets remain valid and may move text partly outside the image.</li>
+<li><strong>WM-3:</strong> Empty text, a nil option, a nil color, a non-finite, non-positive, or renderer-unrepresentable font size, non-finite offsets, and an unknown position must produce a processor error rather than a panic or silent fallback. Offsets are anchor-relative: positive offsets inset corner anchors and move center-anchored text right/down; negative finite offsets remain valid and may move text partly outside the image.</li>
 <li><strong>WM-4:</strong> Named positions are calculated relative to the image bounds, including non-zero <code>Min</code> coordinates. Text outside the destination is clipped by drawing; it is not silently repositioned.</li>
 <li><strong>WM-5:</strong> Watermarking must preserve the source image and must be covered by tests for each anchor, custom fonts, errors, and non-zero-origin bounds.</li>
 </ul>

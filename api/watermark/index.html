@@ -712,12 +712,15 @@
 <h1 id="watermark-options">Watermark Options<a class="headerlink" href="#watermark-options" title="Permanent link">&para;</a></h1>
 <p>Use these functional options to customize text watermarks.</p>
 <ul>
-<li><code>WithFontSize(size float64)</code> - Set font size</li>
-<li><code>WithColor(color color.Color)</code> - Set text color</li>
-<li><code>WithPosition(pos WatermarkPosition)</code> - Set position</li>
-<li><code>WithOffset(x, y float64)</code> - Set offset from position</li>
-<li><code>WithFontBytes(data []byte)</code> - Use custom font </li>
+<li><code>WithFontPath(path string)</code> - Load a <code>.ttf</code> or <code>.otf</code> font file.</li>
+<li><code>WithFontBytes(data []byte)</code> - Use font data directly.</li>
+<li><code>WithFontSize(size float64)</code> - Set a finite, positive font size within the renderer's fixed-point range.</li>
+<li><code>WithColor(color color.Color)</code> - Set a non-nil text color.</li>
+<li><code>WithPosition(pos WatermarkPosition)</code> - Select one of the five named anchors.</li>
+<li><code>WithOffset(x, y float64)</code> - Set finite pixel offsets. Positive values inset corner anchors; at the center they move right/down. Negative values are allowed and can move text outside the image.</li>
 </ul>
+<p>The last supplied font-source option (<code>WithFontPath</code> or <code>WithFontBytes</code>) wins. If neither is supplied, gopiq uses its embedded Go font. A missing or invalid font, invalid option, empty text, or empty destination image sets the processor's chain error.</p>
+<p>Named positions are calculated relative to the image bounds, including non-zero origins. Text that extends beyond the image is clipped rather than moved back into view. Watermarking draws onto a copy and leaves the source image unchanged.</p>
 
 
 

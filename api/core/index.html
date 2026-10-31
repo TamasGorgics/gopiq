@@ -713,12 +713,13 @@
 <p>This section covers the core methods for creating and managing <code>ImageProcessor</code> instances.</p>
 <ul>
 <li><code>New(img image.Image) *ImageProcessor</code> - Create processor from image</li>
-<li><code>FromBytes(data []byte) *ImageProcessor</code> - Create processor from image bytes</li>
+<li><code>FromBytes(data []byte) *ImageProcessor</code> - Decode JPEG, PNG, or GIF bytes into a processor</li>
 <li><code>Clone() *ImageProcessor</code> - Create independent copy</li>
 <li><code>Image() (image.Image, error)</code> - Get current image</li>
 <li><code>ToBytes(format ImageFormat) ([]byte, error)</code> - Export to bytes</li>
-<li><code>Err() error</code> - Get any error from the processing chain </li>
+<li><code>Err() error</code> - Get any error from the processing chain</li>
 </ul>
+<p><code>ToBytes</code> supports JPEG and PNG output. GIF is decode-only; attempting to encode GIF returns an error.</p>
 
 
 

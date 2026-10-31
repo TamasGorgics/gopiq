@@ -30,6 +30,8 @@ opts := gopiq.PerformanceOptions{
 processor := gopiq.NewWithPerformanceOptions(image, opts)
 ```
 
+The default options enable parallel processing at 10,000 pixels and use `runtime.NumCPU()` goroutines. A `MaxGoroutines` value less than or equal to zero uses that runtime default; a `MinSizeForParallel` value less than or equal to zero allows parallel processing for any non-empty image. `GrayscaleFast()` leaves empty images unchanged, and disabling parallel processing always selects the sequential path.
+
 ### Scalability
 
 **Parallel Processing Performance** (1920x1080 images):
@@ -44,4 +46,4 @@ processor := gopiq.NewWithPerformanceOptions(image, opts)
 2. **Parallel Processing**: Utilizes multiple CPU cores automatically
 3. **Memory Pooling**: Reduces garbage collection pressure
 4. **SIMD-friendly Operations**: CPU-optimized pixel processing
-5. **ITU-R BT.709 Grayscale**: Professional-grade color conversion 
+5. **ITU-R BT.709 Grayscale**: Professional-grade color conversion

@@ -104,19 +104,91 @@ var rgbaPool = sync.Pool{
 	},
 }
 
+const rgbaBytesPerPixel = 4
+
+// checkedImageDimensions returns the extent of bounds without allowing an
+// invalid or overflowing rectangle to wrap around.
+func checkedImageDimensions(bounds image.Rectangle) (width, height int, err error) {
+	width, err = checkedExtent(bounds.Min.X, bounds.Max.X)
+	if err != nil {
+		return 0, 0, err
+	}
+	height, err = checkedExtent(bounds.Min.Y, bounds.Max.Y)
+	if err != nil {
+		return 0, 0, err
+	}
+	return width, height, nil
+}
+
+func checkedExtent(min, max int) (int, error) {
+	if max < min {
+		return 0, fmt.Errorf("invalid image bounds: maximum %d is less than minimum %d", max, min)
+	}
+
+	maxInt := int(^uint(0) >> 1)
+	if min < 0 && max > maxInt+min {
+		return 0, fmt.Errorf("image bounds extent overflows int")
+	}
+	return max - min, nil
+}
+
+// checkedRGBABytes verifies that an RGBA image with these dimensions can be
+// represented by a Go slice and returns its pixel-buffer length.
+func checkedRGBABytes(width, height int) (int, error) {
+	if width < 0 || height < 0 {
+		return 0, fmt.Errorf("image dimensions must not be negative")
+	}
+	if width == 0 || height == 0 {
+		return 0, nil
+	}
+
+	maxInt := int(^uint(0) >> 1)
+	if width > maxInt/rgbaBytesPerPixel {
+		return 0, fmt.Errorf("RGBA image buffer size overflows int")
+	}
+	rowBytes := width * rgbaBytesPerPixel
+	if height > maxInt/rowBytes {
+		return 0, fmt.Errorf("RGBA image buffer size overflows int")
+	}
+	return rowBytes * height, nil
+}
+
+func newRGBAChecked(bounds image.Rectangle) (*image.RGBA, error) {
+	width, height, err := checkedImageDimensions(bounds)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := checkedRGBABytes(width, height); err != nil {
+		return nil, err
+	}
+	return image.NewRGBA(bounds), nil
+}
+
 // getPooledRGBA returns an RGBA image from the pool, resized to the given bounds
 func getPooledRGBA(bounds image.Rectangle) *image.RGBA {
+	width, height, err := checkedImageDimensions(bounds)
+	if err != nil {
+		return nil
+	}
+	pixelsNeeded, err := checkedRGBABytes(width, height)
+	if err != nil {
+		return nil
+	}
+
 	img := rgbaPool.Get().(*image.RGBA)
-	width, height := bounds.Dx(), bounds.Dy()
 
 	// Resize the pooled image if needed
 	if img.Bounds().Dx() < width || img.Bounds().Dy() < height {
-		img = image.NewRGBA(bounds)
+		fresh, allocErr := newRGBAChecked(bounds)
+		if allocErr != nil {
+			rgbaPool.Put(img)
+			return nil
+		}
+		img = fresh
 	} else {
 		// Adjust the bounds to match what we need
 		img.Rect = bounds
 		// Clear the pixel data for the used area
-		pixelsNeeded := width * height * 4
 		if len(img.Pix) < pixelsNeeded {
 			img.Pix = make([]uint8, pixelsNeeded)
 		} else {
@@ -133,8 +205,20 @@ func getPooledRGBA(bounds image.Rectangle) *image.RGBA {
 
 // returnPooledRGBA returns an RGBA image to the pool for reuse
 func returnPooledRGBA(img *image.RGBA) {
+	if img == nil {
+		return
+	}
+	width, height, err := checkedImageDimensions(img.Bounds())
+	if err != nil {
+		return
+	}
+	bufferBytes, err := checkedRGBABytes(width, height)
+	if err != nil {
+		return
+	}
+
 	// Don't pool very large images to avoid memory waste
-	if img.Bounds().Dx()*img.Bounds().Dy() <= 2000*2000 {
+	if bufferBytes/rgbaBytesPerPixel <= 2000*2000 {
 		rgbaPool.Put(img)
 	}
 }
@@ -243,8 +327,9 @@ func (ip *ImageProcessor) Clone() *ImageProcessor {
 // --- Image Processing Chainable Methods ---
 
 // Crop crops the image to the specified rectangle defined by x, y, width, and height.
+// Coordinates are in the source image's coordinate space; the result starts at (0, 0).
 // Returns the ImageProcessor for chaining. An error is set if the crop area is out of bounds
-// or dimensions are invalid.
+// or dimensions are invalid or cannot be represented safely.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) Crop(x, y, width, height int) *ImageProcessor {
 	ip.mu.Lock()
@@ -257,9 +342,26 @@ func (ip *ImageProcessor) Crop(x, y, width, height int) *ImageProcessor {
 		ip.err = fmt.Errorf("crop dimensions must be positive (width: %d, height: %d)", width, height)
 		return ip
 	}
+	if ip.currentImage == nil {
+		ip.err = fmt.Errorf("no image available to crop")
+		return ip
+	}
 
 	bounds := ip.currentImage.Bounds()
-	cropRect := image.Rect(x, y, x+width, y+height)
+	if _, _, err := checkedImageDimensions(bounds); err != nil {
+		ip.err = fmt.Errorf("invalid source image bounds: %w", err)
+		return ip
+	}
+
+	maxInt := int(^uint(0) >> 1)
+	if x > maxInt-width || y > maxInt-height {
+		ip.err = fmt.Errorf("crop rectangle coordinates overflow int")
+		return ip
+	}
+	cropRect := image.Rectangle{
+		Min: image.Pt(x, y),
+		Max: image.Pt(x+width, y+height),
+	}
 
 	if !cropRect.In(bounds) {
 		ip.err = fmt.Errorf("crop rectangle %v is out of image bounds %v", cropRect, bounds)
@@ -267,17 +369,22 @@ func (ip *ImageProcessor) Crop(x, y, width, height int) *ImageProcessor {
 	}
 
 	// Create a new RGBA image and draw the cropped portion onto it.
-	croppedImg := newRGBA(image.Rect(0, 0, width, height))
+	croppedImg, err := newRGBAChecked(image.Rect(0, 0, width, height))
+	if err != nil {
+		ip.err = fmt.Errorf("invalid crop image size: %w", err)
+		return ip
+	}
 	draw.Draw(croppedImg, croppedImg.Bounds(), ip.currentImage, cropRect.Min, draw.Src)
 
 	ip.currentImage = croppedImg
 	return ip
 }
 
-// Resize resizes the image to the specified width and height using Catmull-Rom interpolation.
+// Resize resizes a non-empty image to the specified width and height using Catmull-Rom interpolation.
 // Catmull-Rom provides a good balance of quality and performance among standard library options
 // (available in image/draw since Go 1.18).
-// Returns the ImageProcessor for chaining. An error is set if dimensions are invalid.
+// Returns the ImageProcessor for chaining. An error is set if dimensions are invalid, the source
+// image is empty, or the destination buffer size cannot be represented safely.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) Resize(width, height int) *ImageProcessor {
 	ip.mu.Lock()
@@ -290,10 +397,28 @@ func (ip *ImageProcessor) Resize(width, height int) *ImageProcessor {
 		ip.err = fmt.Errorf("resize dimensions must be positive (width: %d, height: %d)", width, height)
 		return ip
 	}
+	if ip.currentImage == nil {
+		ip.err = fmt.Errorf("no image available to resize")
+		return ip
+	}
 
 	originalBounds := ip.currentImage.Bounds()
+	originalWidth, originalHeight, err := checkedImageDimensions(originalBounds)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid source image bounds: %w", err)
+		return ip
+	}
+	if originalWidth == 0 || originalHeight == 0 {
+		ip.err = fmt.Errorf("cannot resize an image with empty bounds %v", originalBounds)
+		return ip
+	}
+
 	dstRect := image.Rect(0, 0, width, height)
-	newImg := newRGBA(dstRect)
+	newImg, err := newRGBAChecked(dstRect)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid resize image size: %w", err)
+		return ip
+	}
 
 	// Use Catmull-Rom interpolator from image/draw package (standard library)
 	draw.CatmullRom.Scale(newImg, dstRect, ip.currentImage, originalBounds, draw.Src, nil)
@@ -304,7 +429,7 @@ func (ip *ImageProcessor) Resize(width, height int) *ImageProcessor {
 
 // Grayscale converts the image to grayscale using optimized direct buffer access.
 // For maximum performance on large images, consider using GrayscaleFast() instead.
-// Returns the ImageProcessor for chaining.
+// Empty images are left unchanged. Returns the ImageProcessor for chaining.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) Grayscale() *ImageProcessor {
 	ip.mu.Lock()
@@ -313,53 +438,12 @@ func (ip *ImageProcessor) Grayscale() *ImageProcessor {
 	if ip.err != nil {
 		return ip
 	}
-
-	bounds := ip.currentImage.Bounds()
-
-	// Convert source to RGBA for direct pixel access
-	srcRGBA, ok := ip.currentImage.(*image.RGBA)
-	if !ok {
-		srcRGBA = image.NewRGBA(bounds)
-		draw.Draw(srcRGBA, bounds, ip.currentImage, bounds.Min, draw.Src)
-	}
-
-	// Create destination image
-	dstRGBA := image.NewRGBA(bounds)
-	width, height := bounds.Dx(), bounds.Dy()
-
-	// Process all pixels using direct buffer access (much faster than At/Set)
-	for y := 0; y < height; y++ {
-		srcRowStart := y * srcRGBA.Stride
-		dstRowStart := y * dstRGBA.Stride
-
-		for x := 0; x < width; x++ {
-			srcIdx := srcRowStart + x*4
-			dstIdx := dstRowStart + x*4
-
-			// Get RGB values directly from buffer
-			r := srcRGBA.Pix[srcIdx]
-			g := srcRGBA.Pix[srcIdx+1]
-			b := srcRGBA.Pix[srcIdx+2]
-			a := srcRGBA.Pix[srcIdx+3]
-
-			// Calculate grayscale using luminosity formula (ITU-R BT.709)
-			gray := uint8(0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b))
-
-			// Set grayscale value to all RGB channels
-			dstRGBA.Pix[dstIdx] = gray   // R
-			dstRGBA.Pix[dstIdx+1] = gray // G
-			dstRGBA.Pix[dstIdx+2] = gray // B
-			dstRGBA.Pix[dstIdx+3] = a    // A (preserve alpha)
-		}
-	}
-
-	ip.currentImage = dstRGBA
-	return ip
+	return ip.grayscaleDirect()
 }
 
 // GrayscaleFast converts the image to grayscale using optimized parallel processing.
 // This method is significantly faster than Grayscale() for large images.
-// Returns the ImageProcessor for chaining.
+// Empty images are left unchanged. Returns the ImageProcessor for chaining.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) GrayscaleFast() *ImageProcessor {
 	ip.mu.Lock()
@@ -368,12 +452,27 @@ func (ip *ImageProcessor) GrayscaleFast() *ImageProcessor {
 	if ip.err != nil {
 		return ip
 	}
+	if ip.currentImage == nil {
+		ip.err = fmt.Errorf("no image available to convert to grayscale")
+		return ip
+	}
 
 	bounds := ip.currentImage.Bounds()
-	width, height := bounds.Dx(), bounds.Dy()
+	width, height, err := checkedImageDimensions(bounds)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid source image bounds: %w", err)
+		return ip
+	}
+	if width == 0 || height == 0 {
+		return ip
+	}
+	bufferBytes, err := checkedRGBABytes(width, height)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid grayscale image size: %w", err)
+		return ip
+	}
 
-	// Use parallel processing for large images
-	if ip.perfOpts.EnableParallelProcessing && width*height >= ip.perfOpts.MinSizeForParallel {
+	if shouldUseParallelProcessing(bufferBytes/rgbaBytesPerPixel, ip.perfOpts) {
 		return ip.grayscaleParallel()
 	}
 
@@ -381,31 +480,101 @@ func (ip *ImageProcessor) GrayscaleFast() *ImageProcessor {
 	return ip.grayscaleDirect()
 }
 
-// grayscaleParallel processes the image using multiple goroutines for better performance.
-func (ip *ImageProcessor) grayscaleParallel() *ImageProcessor {
-	bounds := ip.currentImage.Bounds()
-	width, height := bounds.Dx(), bounds.Dy()
+func shouldUseParallelProcessing(pixelCount int, opts PerformanceOptions) bool {
+	if !opts.EnableParallelProcessing {
+		return false
+	}
+	threshold := opts.MinSizeForParallel
+	if threshold < 0 {
+		threshold = 0
+	}
+	return pixelCount >= threshold
+}
 
-	// Convert source to RGBA for direct pixel access
-	srcRGBA, ok := ip.currentImage.(*image.RGBA)
-	if !ok {
-		// Convert to RGBA first
-		srcRGBA = image.NewRGBA(bounds)
+func grayscaleWorkerCount(height, maxGoroutines int) int {
+	if height <= 0 {
+		return 0
+	}
+	if maxGoroutines <= 0 {
+		maxGoroutines = runtime.NumCPU()
+	}
+	if maxGoroutines < 1 {
+		maxGoroutines = 1
+	}
+	if maxGoroutines > height {
+		maxGoroutines = height
+	}
+	return maxGoroutines
+}
+
+func (ip *ImageProcessor) grayscaleBuffers() (srcRGBA, dstRGBA *image.RGBA, width, height int, err error) {
+	if ip.currentImage == nil {
+		return nil, nil, 0, 0, fmt.Errorf("no image available to convert to grayscale")
+	}
+
+	bounds := ip.currentImage.Bounds()
+	width, height, err = checkedImageDimensions(bounds)
+	if err != nil {
+		return nil, nil, 0, 0, fmt.Errorf("invalid source image bounds: %w", err)
+	}
+	if width == 0 || height == 0 {
+		return nil, nil, width, height, nil
+	}
+	if _, err = checkedRGBABytes(width, height); err != nil {
+		return nil, nil, 0, 0, fmt.Errorf("invalid grayscale image size: %w", err)
+	}
+
+	if rgba, ok := ip.currentImage.(*image.RGBA); ok {
+		srcRGBA = rgba
+	} else {
+		srcRGBA, err = newRGBAChecked(bounds)
+		if err != nil {
+			return nil, nil, 0, 0, fmt.Errorf("invalid grayscale source buffer: %w", err)
+		}
 		draw.Draw(srcRGBA, bounds, ip.currentImage, bounds.Min, draw.Src)
 	}
 
-	// Create destination image
-	dstRGBA := image.NewRGBA(bounds)
+	dstRGBA, err = newRGBAChecked(bounds)
+	if err != nil {
+		return nil, nil, 0, 0, fmt.Errorf("invalid grayscale destination buffer: %w", err)
+	}
+	return srcRGBA, dstRGBA, width, height, nil
+}
 
-	// Calculate optimal number of goroutines
-	numGoroutines := ip.perfOpts.MaxGoroutines
-	if numGoroutines <= 0 {
-		numGoroutines = runtime.NumCPU()
+func grayscaleRGBArow(srcRGBA, dstRGBA *image.RGBA, row, width int) {
+	srcRowStart := row * srcRGBA.Stride
+	dstRowStart := row * dstRGBA.Stride
+	for x := 0; x < width; x++ {
+		srcIndex := srcRowStart + x*rgbaBytesPerPixel
+		dstIndex := dstRowStart + x*rgbaBytesPerPixel
+
+		r := srcRGBA.Pix[srcIndex]
+		g := srcRGBA.Pix[srcIndex+1]
+		b := srcRGBA.Pix[srcIndex+2]
+		alpha := srcRGBA.Pix[srcIndex+3]
+		gray := uint8(0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b))
+
+		dstRGBA.Pix[dstIndex] = gray
+		dstRGBA.Pix[dstIndex+1] = gray
+		dstRGBA.Pix[dstIndex+2] = gray
+		dstRGBA.Pix[dstIndex+3] = alpha
+	}
+}
+
+// grayscaleParallel processes the image using multiple goroutines for better performance.
+func (ip *ImageProcessor) grayscaleParallel() *ImageProcessor {
+	srcRGBA, dstRGBA, width, height, err := ip.grayscaleBuffers()
+	if err != nil {
+		ip.err = err
+		return ip
+	}
+	if width == 0 || height == 0 {
+		return ip
 	}
 
-	// Don't use more goroutines than we have rows
-	if numGoroutines > height {
-		numGoroutines = height
+	numGoroutines := grayscaleWorkerCount(height, ip.perfOpts.MaxGoroutines)
+	if numGoroutines == 0 {
+		return ip
 	}
 
 	var wg sync.WaitGroup
@@ -415,44 +584,18 @@ func (ip *ImageProcessor) grayscaleParallel() *ImageProcessor {
 	rowsPerGoroutine := height / numGoroutines
 
 	for i := 0; i < numGoroutines; i++ {
-		go func(goroutineID int) {
+		startRow := i * rowsPerGoroutine
+		endRow := startRow + rowsPerGoroutine
+		if i == numGoroutines-1 {
+			endRow = height
+		}
+
+		go func(startRow, endRow int) {
 			defer wg.Done()
-
-			startRow := goroutineID * rowsPerGoroutine
-			endRow := startRow + rowsPerGoroutine
-
-			// Last goroutine handles remaining rows
-			if goroutineID == numGoroutines-1 {
-				endRow = height
-			}
-
-			// Process rows assigned to this goroutine
 			for y := startRow; y < endRow; y++ {
-				rowStart := (y-bounds.Min.Y)*srcRGBA.Stride + (0-bounds.Min.X)*4
-
-				for x := 0; x < width; x++ {
-					pixelIdx := rowStart + x*4
-
-					// Get RGB values directly from buffer
-					r := srcRGBA.Pix[pixelIdx]
-					g := srcRGBA.Pix[pixelIdx+1]
-					b := srcRGBA.Pix[pixelIdx+2]
-					a := srcRGBA.Pix[pixelIdx+3]
-
-					// Calculate grayscale using luminosity formula (ITU-R BT.709)
-					// This is more accurate than simple averaging
-					gray := uint8(0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b))
-
-					// Set grayscale value to all RGB channels
-					dstRowStart := (y-bounds.Min.Y)*dstRGBA.Stride + (0-bounds.Min.X)*4
-					dstPixelIdx := dstRowStart + x*4
-					dstRGBA.Pix[dstPixelIdx] = gray   // R
-					dstRGBA.Pix[dstPixelIdx+1] = gray // G
-					dstRGBA.Pix[dstPixelIdx+2] = gray // B
-					dstRGBA.Pix[dstPixelIdx+3] = a    // A (preserve alpha)
-				}
+				grayscaleRGBArow(srcRGBA, dstRGBA, y, width)
 			}
-		}(i)
+		}(startRow, endRow)
 	}
 
 	wg.Wait()
@@ -462,43 +605,17 @@ func (ip *ImageProcessor) grayscaleParallel() *ImageProcessor {
 
 // grayscaleDirect processes the image using direct buffer access in a single thread.
 func (ip *ImageProcessor) grayscaleDirect() *ImageProcessor {
-	bounds := ip.currentImage.Bounds()
-	width, height := bounds.Dx(), bounds.Dy()
-
-	// Convert source to RGBA for direct pixel access
-	srcRGBA, ok := ip.currentImage.(*image.RGBA)
-	if !ok {
-		srcRGBA = image.NewRGBA(bounds)
-		draw.Draw(srcRGBA, bounds, ip.currentImage, bounds.Min, draw.Src)
+	srcRGBA, dstRGBA, width, height, err := ip.grayscaleBuffers()
+	if err != nil {
+		ip.err = err
+		return ip
+	}
+	if width == 0 || height == 0 {
+		return ip
 	}
 
-	// Create destination image
-	dstRGBA := image.NewRGBA(bounds)
-
-	// Process all pixels using direct buffer access
-	for y := 0; y < height; y++ {
-		rowStart := y * srcRGBA.Stride
-		dstRowStart := y * dstRGBA.Stride
-
-		for x := 0; x < width; x++ {
-			pixelIdx := rowStart + x*4
-			dstPixelIdx := dstRowStart + x*4
-
-			// Get RGB values directly from buffer
-			r := srcRGBA.Pix[pixelIdx]
-			g := srcRGBA.Pix[pixelIdx+1]
-			b := srcRGBA.Pix[pixelIdx+2]
-			a := srcRGBA.Pix[pixelIdx+3]
-
-			// Calculate grayscale using luminosity formula
-			gray := uint8(0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b))
-
-			// Set grayscale value to all RGB channels
-			dstRGBA.Pix[dstPixelIdx] = gray   // R
-			dstRGBA.Pix[dstPixelIdx+1] = gray // G
-			dstRGBA.Pix[dstPixelIdx+2] = gray // B
-			dstRGBA.Pix[dstPixelIdx+3] = a    // A (preserve alpha)
-		}
+	for row := 0; row < height; row++ {
+		grayscaleRGBArow(srcRGBA, dstRGBA, row, width)
 	}
 
 	ip.currentImage = dstRGBA
@@ -508,7 +625,7 @@ func (ip *ImageProcessor) grayscaleDirect() *ImageProcessor {
 // AddTextWatermark adds a text watermark to the image with anti-aliasing.
 // This uses golang.org/x/image/font package for proper font rendering.
 // Returns the ImageProcessor for chaining. An error is set if text is empty,
-// font fails to load, or drawing fails.
+// the image bounds are empty, the font fails to load, or drawing fails.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) AddTextWatermark(text string, options ...WatermarkOption) *ImageProcessor {
 	ip.mu.Lock()
@@ -519,6 +636,25 @@ func (ip *ImageProcessor) AddTextWatermark(text string, options ...WatermarkOpti
 	}
 	if text == "" {
 		ip.err = fmt.Errorf("watermark text cannot be empty")
+		return ip
+	}
+	if ip.currentImage == nil {
+		ip.err = fmt.Errorf("no image available for watermark")
+		return ip
+	}
+
+	bounds := ip.currentImage.Bounds()
+	width, height, err := checkedImageDimensions(bounds)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid source image bounds: %w", err)
+		return ip
+	}
+	if width == 0 || height == 0 {
+		ip.err = fmt.Errorf("cannot add a watermark to an image with empty bounds %v", bounds)
+		return ip
+	}
+	if _, err := checkedRGBABytes(width, height); err != nil {
+		ip.err = fmt.Errorf("invalid watermark image size: %w", err)
 		return ip
 	}
 
@@ -548,8 +684,11 @@ func (ip *ImageProcessor) AddTextWatermark(text string, options ...WatermarkOpti
 	defer face.Close()
 
 	// Create a new RGBA image to draw on to avoid modifying the original directly
-	bounds := ip.currentImage.Bounds()
-	imgWithWatermark := newRGBA(bounds)
+	imgWithWatermark, err := newRGBAChecked(bounds)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid watermark image size: %w", err)
+		return ip
+	}
 	draw.Draw(imgWithWatermark, bounds, ip.currentImage, bounds.Min, draw.Src) // Copy original image
 
 	dr := &font.Drawer{
@@ -597,12 +736,13 @@ func (ip *ImageProcessor) AddTextWatermark(text string, options ...WatermarkOpti
 // PerformanceOptions controls optimization settings for image processing.
 type PerformanceOptions struct {
 	// MaxGoroutines limits the number of parallel goroutines for heavy operations.
-	// If 0, defaults to runtime.NumCPU().
+	// If less than or equal to 0, defaults to runtime.NumCPU().
 	MaxGoroutines int
 	// EnableParallelProcessing enables parallel processing for suitable operations.
 	EnableParallelProcessing bool
 	// MinSizeForParallel sets the minimum image size (width * height) before
-	// parallel processing is used. Smaller images process faster sequentially.
+	// parallel processing is used. Values less than or equal to 0 allow parallel
+	// processing for any non-empty image when parallel processing is enabled.
 	MinSizeForParallel int
 }
 

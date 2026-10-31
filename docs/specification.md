@@ -42,7 +42,7 @@ The following are known discrepancies between the current implementation and the
 - **IMG-1:** `Crop(x, y, width, height)` interprets `x` and `y` in the source image's coordinate space. The crop rectangle must have positive dimensions, fit within the source bounds, and be computed without integer overflow. The resulting image has bounds starting at `(0, 0)`.
 - **IMG-2:** `Resize(width, height)` requires positive target dimensions and produces a zero-origin image of the requested size. Invalid or unrepresentable buffer sizes must become chain errors rather than arithmetic-driven panics.
 - **IMG-3:** Operations must support valid images whose bounds do not start at `(0, 0)`, including subimages. Pixel loops must use coordinates or offsets appropriate to the image's actual bounds and stride.
-- **IMG-4:** Operations on empty bounds must have documented behavior and must not panic. Grayscale operations on an empty image are a no-op that preserves its bounds; operations that need source pixels, such as resizing an empty image, report an error.
+- **IMG-4:** Operations on empty bounds must have documented behavior and must not panic. Grayscale operations on an empty image are a no-op that preserves its bounds. Crop, resize, and text-watermark operations on an empty image report a chain error because they cannot produce a valid result.
 - **IMG-5:** Processing operations must not mutate the source image in place.
 
 ### 3.3 Grayscale and performance options

@@ -14,7 +14,7 @@ gopiq must provide a predictable, chainable image-processing API that:
 - has clear, testable format and concurrency guarantees; and
 - makes performance claims only when supported by reproducible measurements.
 
-The existing API and Go 1.24 minimum are retained unless a later versioned change explicitly revises them.
+The Go 1.27.0 minimum is part of this specification. The CI matrix checks that minimum and the latest supported Go 1.27 patch release.
 
 ## 2. Audit baseline and resolution status
 
@@ -94,7 +94,7 @@ If independent pixel storage is later needed, it should be provided by an explic
 - **Q-3:** Timing comparisons belong in Go benchmarks or a separately invoked performance tool, not ordinary unit tests. Unit tests must not depend on machine speed.
 - **Q-4:** Benchmark results must include enough environment and workload detail to be reproduced. Documentation must not present old measurements as universal guarantees.
 - **Q-5:** Pooling or SIMD optimizations may be claimed only when the implementation uses them and reproducible benchmarks demonstrate a benefit. Otherwise, unused pool code and unsupported claims should be removed.
-- **Q-6:** The supported Go-version policy must be explicit. CI must test the module's declared minimum (currently Go 1.24) and, when selected, the latest supported stable version.
+- **Q-6:** The supported Go-version policy must be explicit. CI must test the module's declared minimum (currently Go 1.27.0) and the latest supported stable patch release in that Go line.
 
 ## 4. Planned extensions
 

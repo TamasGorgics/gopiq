@@ -1,6 +1,6 @@
 # .golangci-lint.yml
 # golangci-lint configuration for gopiq - High-Performance Image Processing Library
-# Tailored for Go 1.24, thread-safe concurrent code, and performance optimizations
+# Tailored for Go 1.27, thread-safe concurrent code, and performance optimizations
 
 version: "2"
 
@@ -18,7 +18,7 @@ run:
   tests: true
   
   # Use Go version from go.mod
-  go: "1.24"
+  go: "1.27"
   
   # Skip vendor and generated files
   skip-dirs:

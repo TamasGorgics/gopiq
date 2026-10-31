@@ -218,10 +218,8 @@ func TestM1PerformanceOptionsCanChangeConcurrentlyWithGrayscale(t *testing.T) {
 	const iterations = 12
 	start := make(chan struct{})
 	var wg sync.WaitGroup
-	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
-		go func(index int) {
-			defer wg.Done()
+	for index := range goroutines {
+		wg.Go(func() {
 			<-start
 			for j := 0; j < iterations; j++ {
 				if index%2 == 0 {
@@ -230,7 +228,7 @@ func TestM1PerformanceOptionsCanChangeConcurrentlyWithGrayscale(t *testing.T) {
 				}
 				processor.GrayscaleFast()
 			}
-		}(i)
+		})
 	}
 	close(start)
 	wg.Wait()

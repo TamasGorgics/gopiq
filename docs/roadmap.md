@@ -57,7 +57,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 - Decide whether the unused RGBA pool is worth implementing; remove it and its claims if measurements do not support it.
 - Remove or substantiate SIMD and fixed speedup claims with reproducible benchmark data.
 - Add regression coverage for the requirements in M1–M3.
-- Run build, tests, race detection, vet, lint, and documentation build in CI; retain Go 1.24 as the declared minimum unless the policy is deliberately changed.
+- Run build, tests, race detection, vet, lint, and documentation build in CI; retain Go 1.27.0 as the declared minimum unless the policy is deliberately changed.
 
 **Exit criteria:** Ordinary tests are correctness-focused and stable across machines; all release-gate checks in the specification pass.
 

@@ -553,12 +553,10 @@ func TestConcurrentRead(t *testing.T) {
 	const numOperations = 100
 
 	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
 
 	// Multiple goroutines reading concurrently
-	for i := 0; i < numGoroutines; i++ {
-		go func() {
-			defer wg.Done()
+	for range numGoroutines {
+		wg.Go(func() {
 			for j := 0; j < numOperations; j++ {
 				// Test concurrent reads
 				img, err := proc.Image()
@@ -583,7 +581,7 @@ func TestConcurrentRead(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -594,14 +592,12 @@ func TestConcurrentProcessing(t *testing.T) {
 
 	const numGoroutines = 5
 	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
 
 	results := make([]*ImageProcessor, numGoroutines)
 
 	// Multiple goroutines processing different clones
-	for i := 0; i < numGoroutines; i++ {
-		go func(index int) {
-			defer wg.Done()
+	for index := range numGoroutines {
+		wg.Go(func() {
 
 			// Each goroutine works with its own clone
 			proc := New(originalImg).Clone()
@@ -617,7 +613,7 @@ func TestConcurrentProcessing(t *testing.T) {
 			}
 
 			results[index] = proc
-		}(i)
+		})
 	}
 
 	wg.Wait()
@@ -643,12 +639,10 @@ func TestConcurrentChaining(t *testing.T) {
 
 	const numGoroutines = 10
 	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
 
 	// Test concurrent chaining operations
-	for i := 0; i < numGoroutines; i++ {
-		go func(index int) {
-			defer wg.Done()
+	for index := range numGoroutines {
+		wg.Go(func() {
 
 			// Each goroutine creates its own processor
 			proc := New(originalImg)
@@ -677,7 +671,7 @@ func TestConcurrentChaining(t *testing.T) {
 			if img.Bounds().Dx() != 60 || img.Bounds().Dy() != 60 {
 				t.Errorf("Unexpected final dimensions in goroutine %d: %v", index, img.Bounds())
 			}
-		}(i)
+		})
 	}
 
 	wg.Wait()
@@ -690,12 +684,10 @@ func TestRaceConditionDetection(t *testing.T) {
 
 	const numGoroutines = 20
 	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
 
 	// Mix of read and write operations to stress test the locking
-	for i := 0; i < numGoroutines; i++ {
-		go func(index int) {
-			defer wg.Done()
+	for index := range numGoroutines {
+		wg.Go(func() {
 
 			if index%2 == 0 {
 				// Read operations
@@ -716,7 +708,7 @@ func TestRaceConditionDetection(t *testing.T) {
 					time.Sleep(time.Microsecond)
 				}
 			}
-		}(i)
+		})
 	}
 
 	wg.Wait()

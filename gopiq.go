@@ -121,7 +121,7 @@ func WithOffset(x, y float64) WatermarkOption {
 
 // rgbaPool is a sync.Pool for reusing RGBA image buffers to reduce allocations
 var rgbaPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		// Create a modest-sized RGBA image that can be resized as needed
 		return image.NewRGBA(image.Rect(0, 0, 100, 100))
 	},
@@ -601,24 +601,22 @@ func (ip *ImageProcessor) grayscaleParallel() *ImageProcessor {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
 
 	// Process image in horizontal strips
 	rowsPerGoroutine := height / numGoroutines
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		startRow := i * rowsPerGoroutine
 		endRow := startRow + rowsPerGoroutine
 		if i == numGoroutines-1 {
 			endRow = height
 		}
 
-		go func(startRow, endRow int) {
-			defer wg.Done()
+		wg.Go(func() {
 			for y := startRow; y < endRow; y++ {
 				grayscaleRGBArow(srcRGBA, dstRGBA, y, width)
 			}
-		}(startRow, endRow)
+		})
 	}
 
 	wg.Wait()

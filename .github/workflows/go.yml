@@ -13,13 +13,16 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.27.0", "1.27.3"]
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24'
+        go-version: ${{ matrix.go }}
 
     - name: Build
       run: go build -v ./...
@@ -28,6 +31,7 @@ jobs:
       run: go test -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq ./...
 
     - name: Upload coverage to Codecov
+      if: matrix.go == '1.27.3'
       uses: codecov/codecov-action@v5
       with:
         file: ./coverage.out

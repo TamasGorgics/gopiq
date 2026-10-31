@@ -28,10 +28,9 @@ func createLargeTestImage(width, height int) image.Image {
 func benchmarkGrayscaleSlow(b *testing.B, width, height int) {
 	img := createLargeTestImage(width, height)
 
-	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		proc := New(img)
 		// Simulate the old slow method using At/Set
 		proc.grayscaleSlowMethod()
@@ -67,10 +66,9 @@ func (ip *ImageProcessor) grayscaleSlowMethod() *ImageProcessor {
 func benchmarkGrayscaleOptimized(b *testing.B, width, height int) {
 	img := createLargeTestImage(width, height)
 
-	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		proc := New(img)
 		proc.Grayscale()
 		if proc.Err() != nil {
@@ -83,10 +81,9 @@ func benchmarkGrayscaleOptimized(b *testing.B, width, height int) {
 func benchmarkGrayscaleFast(b *testing.B, width, height int) {
 	img := createLargeTestImage(width, height)
 
-	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		proc := New(img)
 		proc.GrayscaleFast()
 		if proc.Err() != nil {
@@ -165,10 +162,9 @@ func BenchmarkGrayscaleParallelGoroutines(b *testing.B) {
 			opts := DefaultPerformanceOptions()
 			opts.MaxGoroutines = numGoroutines
 
-			b.ResetTimer()
 			b.ReportAllocs()
 
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				proc := NewWithPerformanceOptions(img, opts)
 				proc.GrayscaleFast()
 				if proc.Err() != nil {
@@ -185,7 +181,7 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 
 	b.Run("without_pool", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			// Create multiple processors to test allocation patterns
 			proc1 := New(img)
 			proc2 := proc1.Clone()
@@ -204,7 +200,7 @@ func BenchmarkConcurrentProcessing(b *testing.B) {
 
 	b.Run("sequential", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			proc := New(img)
 			proc.Resize(500, 500).GrayscaleFast().Crop(100, 100, 300, 300)
 		}

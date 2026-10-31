@@ -1,12 +1,12 @@
 # gopiq Roadmap
 
-This roadmap turns the [specification](specification.md) into ordered, verifiable milestones. It is dependency-ordered, not calendar-based; no dates or delivery estimates are implied. All milestones are currently **Planned**.
+This roadmap turns the [specification](specification.md) into ordered, verifiable milestones. It is dependency-ordered, not calendar-based; no dates or delivery estimates are implied. Milestones are **Planned** unless marked **Complete**.
 
 ## Milestones
 
 ### M0 — Make the repository buildable
 
-**Priority:** P0 · **Requirements:** BLD-1–BLD-3
+**Status:** Complete · **Priority:** P0 · **Requirements:** BLD-1–BLD-3
 
 - Move each standalone example into an independently buildable package/directory, or use an equivalent layout that avoids duplicate `main` functions.
 - Correct example asset paths and run instructions after reorganizing.
@@ -17,7 +17,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M1 — Correct core image processing and guard edge cases
 
-**Priority:** P1 · **Requirements:** IMG-1–IMG-5, GRAY-1–GRAY-5, SAFE-1–SAFE-3
+**Status:** Complete · **Priority:** P1 · **Requirements:** IMG-1–IMG-5, GRAY-1–GRAY-5, SAFE-1–SAFE-3
 
 - Fix parallel grayscale indexing for non-zero-origin bounds and subimages.
 - Handle empty images and performance-option edge cases without zero-worker division or invalid pixel access.
@@ -29,7 +29,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M2 — Make watermark and format behavior match the API
 
-**Priority:** P1 · **Requirements:** WM-1–WM-5, FMT-1–FMT-4
+**Status:** Complete · **Priority:** P1 · **Requirements:** WM-1–WM-5, FMT-1–FMT-4
 
 - Implement `WithFontPath` and deterministic font-source option ordering.
 - Validate nil/invalid watermark options and calculate all positions relative to image bounds.

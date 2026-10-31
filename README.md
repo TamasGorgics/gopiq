@@ -15,7 +15,7 @@ A fluent, thread-safe Go image processing library with chainable operations.
 - **Thread-Safe**: Safe for concurrent use by multiple goroutines
 - **High-Quality Processing**: Uses Catmull-Rom interpolation for resizing
 - **Comprehensive Error Handling**: Errors propagate through the chain
-- **Multiple Format Support**: JPEG, PNG input/output
+- **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
 - **Text Watermarks**: Add customizable text overlays with font control
 
 ## Installation
@@ -145,6 +145,8 @@ func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
 - `ToBytes(format ImageFormat) ([]byte, error)` - Export to bytes
 - `Err() error` - Get any error from the processing chain
 
+`FromBytes` decodes JPEG, PNG, and GIF. `ToBytes` encodes JPEG and PNG; GIF encoding is not supported.
+
 ### Processing Operations
 
 - `Resize(width, height int)` - Resize using Catmull-Rom interpolation
@@ -158,7 +160,10 @@ func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
 - `WithColor(color color.Color)` - Set text color
 - `WithPosition(pos WatermarkPosition)` - Set position
 - `WithOffset(x, y float64)` - Set offset from position
+- `WithFontPath(path string)` - Load a font file
 - `WithFontBytes(data []byte)` - Use custom font
+
+If both font-source options are provided, the last one wins. With neither option, the embedded Go font is used. Watermark positions are relative to the image bounds; text outside the image is clipped. Positive offsets inset corner anchors and move centered text right/down.
 
 ## Performance Notes
 

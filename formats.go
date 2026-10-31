@@ -3,20 +3,22 @@ package gopiq
 import (
 	"fmt"
 	"image"
+	_ "image/gif" // Register GIF decoding with image.Decode.
 	"image/jpeg"
 	"image/png"
 	"io"
 	"strings"
 )
 
-// ImageFormat represents supported image output formats.
+// ImageFormat represents a recognized image format. GIF is decode-only;
+// JPEG and PNG are supported for both decoding and encoding.
 type ImageFormat int
 
 const (
 	FormatUnknown ImageFormat = iota
 	FormatJPEG
 	FormatPNG
-	FormatGIF // Can decode, but encoding to Paletted/GIF requires more work than current scope.
+	FormatGIF // Can be decoded, but GIF encoding is not supported.
 )
 
 // String returns the string representation of the ImageFormat.
@@ -67,7 +69,7 @@ func encodeImage(w io.Writer, img image.Image, format ImageFormat) error {
 		// GIF encoding requires image.Paletted. Converting an arbitrary image.Image
 		// to image.Paletted (e.g., quantizing colors) requires external libraries
 		// beyond golang.org/x, or a complex manual implementation of color quantization.
-		return fmt.Errorf("GIF encoding is not directly supported without 3rd-party color quantization")
+		return fmt.Errorf("GIF encoding is unsupported because palette quantization is not implemented")
 	default:
 		return fmt.Errorf("unsupported image format for encoding: %s", format.String())
 	}

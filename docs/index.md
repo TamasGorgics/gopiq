@@ -15,7 +15,7 @@ A fluent, thread-safe Go image processing library with chainable operations.
 - **Thread-Safe**: Safe for concurrent use by multiple goroutines
 - **High-Quality Processing**: Uses Catmull-Rom interpolation for resizing
 - **Comprehensive Error Handling**: Errors propagate through the chain
-- **Multiple Format Support**: JPEG, PNG input/output
+- **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
 - **Text Watermarks**: Add customizable text overlays with font control
 
 ## Installation
@@ -72,4 +72,4 @@ func main() {
 
     fmt.Println("Image processed and saved successfully")
 }
-``` 
+```

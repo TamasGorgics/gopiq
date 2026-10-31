@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
+	"os"
+	"reflect"
 	"runtime"
 	"sync"
 
@@ -38,44 +41,62 @@ const (
 
 // watermarkConfig holds configuration for adding text watermark.
 type watermarkConfig struct {
-	Text      string
-	FontPath  string  // Optional: path to .ttf or .otf font file
-	FontBytes []byte  // Optional: raw font bytes (preferred for embedding)
-	FontSize  float64 // Font size in points
-	Color     color.Color
-	Position  WatermarkPosition
-	OffsetX   float64 // Offset from chosen position
-	OffsetY   float64
+	Text       string
+	FontPath   string // Optional: path to .ttf or .otf font file
+	FontBytes  []byte // Optional: raw font bytes (preferred for embedding)
+	fontSource watermarkFontSource
+	FontSize   float64 // Font size in points
+	Color      color.Color
+	Position   WatermarkPosition
+	OffsetX    float64 // Offset from chosen position
+	OffsetY    float64
 }
+
+type watermarkFontSource uint8
+
+const (
+	watermarkFontSourceUnset watermarkFontSource = iota
+	watermarkFontSourceBytes
+	watermarkFontSourcePath
+)
 
 // defaultWatermarkConfig provides sane defaults.
 func defaultWatermarkConfig() *watermarkConfig {
 	return &watermarkConfig{
-		FontSize:  24,
-		Color:     color.RGBA{255, 255, 255, 128}, // White with 50% opacity
-		Position:  PositionBottomRight,
-		OffsetX:   10,
-		OffsetY:   10,
-		FontBytes: goregular.TTF, // Use default Go font if no other font is specified
+		FontSize:   24,
+		Color:      color.RGBA{255, 255, 255, 128}, // White with 50% opacity
+		Position:   PositionBottomRight,
+		OffsetX:    10,
+		OffsetY:    10,
+		FontBytes:  goregular.TTF, // Use default Go font if no other font is specified
+		fontSource: watermarkFontSourceBytes,
 	}
 }
 
 // WatermarkOption is a functional option for configuring the watermark.
 type WatermarkOption func(*watermarkConfig)
 
-// WithFontPath specifies the font path for the watermark.
-// Use this if the font file is external.
+// WithFontPath specifies a font file for the watermark. If both font-source
+// options are supplied, the last one takes precedence.
 func WithFontPath(path string) WatermarkOption {
-	return func(wc *watermarkConfig) { wc.FontPath = path }
+	return func(wc *watermarkConfig) {
+		wc.FontPath = path
+		wc.fontSource = watermarkFontSourcePath
+	}
 }
 
 // WithFontBytes specifies font data directly (e.g., from an embedded font).
-// This is generally preferred for self-contained libraries.
+// This is generally preferred for self-contained libraries. If both font-source
+// options are supplied, the last one takes precedence.
 func WithFontBytes(data []byte) WatermarkOption {
-	return func(wc *watermarkConfig) { wc.FontBytes = data }
+	return func(wc *watermarkConfig) {
+		wc.FontBytes = data
+		wc.fontSource = watermarkFontSourceBytes
+	}
 }
 
-// WithFontSize sets the font size for the watermark.
+// WithFontSize sets the font size for the watermark. The size must be finite,
+// positive, and within the renderer's fixed-point range.
 func WithFontSize(size float64) WatermarkOption {
 	return func(wc *watermarkConfig) { wc.FontSize = size }
 }
@@ -91,7 +112,9 @@ func WithPosition(pos WatermarkPosition) WatermarkOption {
 }
 
 // WithOffset sets an additional offset (in pixels) from the chosen position.
-// Positive X moves right, positive Y moves down.
+// Positive offsets move inward from corner anchors; for the center position,
+// positive X moves right and positive Y moves down. Negative offsets can move
+// text partly outside the image.
 func WithOffset(x, y float64) WatermarkOption {
 	return func(wc *watermarkConfig) { wc.OffsetX = x; wc.OffsetY = y }
 }
@@ -255,7 +278,7 @@ func (ip *ImageProcessor) SetPerformanceOptions(opts PerformanceOptions) *ImageP
 }
 
 // FromBytes creates a new ImageProcessor by decoding an image from a byte slice.
-// It supports JPEG and PNG formats. Returns an error if decoding fails.
+// It supports JPEG, PNG, and GIF formats. Returns an error if decoding fails.
 func FromBytes(data []byte) *ImageProcessor {
 	if len(data) == 0 {
 		return &ImageProcessor{err: fmt.Errorf("input byte slice is empty")}
@@ -272,8 +295,8 @@ func FromBytes(data []byte) *ImageProcessor {
 }
 
 // ToBytes converts the current processed image to a byte slice in the specified format.
-// Supports FormatJPEG and FormatPNG. Returns an error if encoding fails or if
-// a previous error in the chain exists.
+// It supports FormatJPEG and FormatPNG; FormatGIF is decode-only. Returns an error if
+// encoding fails or if a previous error in the chain exists.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) ToBytes(format ImageFormat) ([]byte, error) {
 	ip.mu.RLock()
@@ -625,7 +648,8 @@ func (ip *ImageProcessor) grayscaleDirect() *ImageProcessor {
 // AddTextWatermark adds a text watermark to the image with anti-aliasing.
 // This uses golang.org/x/image/font package for proper font rendering.
 // Returns the ImageProcessor for chaining. An error is set if text is empty,
-// the image bounds are empty, the font fails to load, or drawing fails.
+// the image bounds are empty, options are invalid, the font fails to load, or
+// drawing fails. Font-source options are applied in order; the last one wins.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) AddTextWatermark(text string, options ...WatermarkOption) *ImageProcessor {
 	ip.mu.Lock()
@@ -661,14 +685,34 @@ func (ip *ImageProcessor) AddTextWatermark(text string, options ...WatermarkOpti
 	cfg := defaultWatermarkConfig()
 	cfg.Text = text
 
-	for _, opt := range options {
+	for index, opt := range options {
+		if opt == nil {
+			ip.err = fmt.Errorf("watermark option %d cannot be nil", index)
+			return ip
+		}
 		opt(cfg)
 	}
+	if err := validateWatermarkConfig(cfg); err != nil {
+		ip.err = err
+		return ip
+	}
 
-	// Load font
-	fnt, err := opentype.Parse(cfg.FontBytes)
+	fontBytes := cfg.FontBytes
+	if cfg.fontSource == watermarkFontSourcePath {
+		fontBytes, err = os.ReadFile(cfg.FontPath)
+		if err != nil {
+			ip.err = fmt.Errorf("failed to read watermark font %q: %w", cfg.FontPath, err)
+			return ip
+		}
+	}
+
+	fnt, err := opentype.Parse(fontBytes)
 	if err != nil {
-		ip.err = fmt.Errorf("failed to parse font bytes for watermark: %w", err)
+		if cfg.fontSource == watermarkFontSourcePath {
+			ip.err = fmt.Errorf("failed to parse watermark font %q: %w", cfg.FontPath, err)
+		} else {
+			ip.err = fmt.Errorf("failed to parse font bytes for watermark: %w", err)
+		}
 		return ip
 	}
 
@@ -683,54 +727,204 @@ func (ip *ImageProcessor) AddTextWatermark(text string, options ...WatermarkOpti
 	}
 	defer face.Close()
 
-	// Create a new RGBA image to draw on to avoid modifying the original directly
-	imgWithWatermark, err := newRGBAChecked(bounds)
-	if err != nil {
-		ip.err = fmt.Errorf("invalid watermark image size: %w", err)
+	metrics := face.Metrics()
+	if metrics.Height < 0 || metrics.Ascent < 0 || metrics.Descent < 0 {
+		ip.err = fmt.Errorf("watermark font produced invalid metrics")
 		return ip
 	}
-	draw.Draw(imgWithWatermark, bounds, ip.currentImage, bounds.Min, draw.Src) // Copy original image
 
-	dr := &font.Drawer{
-		Dst:  imgWithWatermark,
-		Src:  image.NewUniform(cfg.Color),
-		Face: face,
+	// Measure the text at a zero-origin baseline. Drawing uses a translated
+	// overlay below so image bounds do not leak into the font's fixed-point space.
+	measureDrawer := font.Drawer{Face: face}
+	textBounds, _ := measureDrawer.BoundString(cfg.Text)
+	if textBounds.Max.X < textBounds.Min.X || textBounds.Max.Y < textBounds.Min.Y {
+		ip.err = fmt.Errorf("watermark font produced invalid text bounds")
+		return ip
 	}
-
-	// Measure text bounds and position
-	textBounds, _ := dr.BoundString(cfg.Text)                    // Bounds of the text if drawn at (0,0)
-	textWidth := float64(textBounds.Max.X-textBounds.Min.X) / 64 // Convert fixed.Int26_6 to float64 pixels
-	textHeight := float64(face.Metrics().Height) / 64            // Ascent + descent in pixels
+	textWidth := float64(textBounds.Max.X)/64 - float64(textBounds.Min.X)/64
+	textHeight := float64(metrics.Height) / 64
+	ascent := float64(metrics.Ascent) / 64
+	descent := float64(metrics.Descent) / 64
 
 	var x, y float64
 
 	switch cfg.Position {
 	case PositionTopLeft:
 		x = cfg.OffsetX
-		y = cfg.OffsetY + (float64(face.Metrics().Ascent) / 64) // Adjust for baseline
+		y = cfg.OffsetY + ascent
 	case PositionTopRight:
-		x = float64(bounds.Dx()) - textWidth - cfg.OffsetX
-		y = cfg.OffsetY + (float64(face.Metrics().Ascent) / 64)
+		x = float64(width) - textWidth - cfg.OffsetX
+		y = cfg.OffsetY + ascent
 	case PositionBottomLeft:
 		x = cfg.OffsetX
-		y = float64(bounds.Dy()) - cfg.OffsetY - (float64(face.Metrics().Descent) / 64) // Adjust for baseline
+		y = float64(height) - cfg.OffsetY - descent
 	case PositionBottomRight:
-		x = float64(bounds.Dx()) - textWidth - cfg.OffsetX
-		y = float64(bounds.Dy()) - cfg.OffsetY - (float64(face.Metrics().Descent) / 64)
+		x = float64(width) - textWidth - cfg.OffsetX
+		y = float64(height) - cfg.OffsetY - descent
 	case PositionCenter:
-		x = (float64(bounds.Dx()) - textWidth) / 2
-		y = (float64(bounds.Dy())-textHeight)/2 + (float64(face.Metrics().Ascent) / 64) // Center of block + ascent
+		x = (float64(width)-textWidth)/2 + cfg.OffsetX
+		y = (float64(height)-textHeight)/2 + ascent + cfg.OffsetY
+	default:
+		// validateWatermarkConfig rejects unknown positions before this switch.
+		ip.err = fmt.Errorf("unknown watermark position: %d", cfg.Position)
+		return ip
 	}
 
-	dr.Dot = fixed.Point26_6{
-		X: fixed.I(int(x)),
-		Y: fixed.I(int(y)),
+	textLeft := x + float64(textBounds.Min.X)/64
+	textRight := x + float64(textBounds.Max.X)/64
+	textTop := y + float64(textBounds.Min.Y)/64
+	textBottom := y + float64(textBounds.Max.Y)/64
+	if textRight <= 0 || textLeft >= float64(width) || textBottom <= 0 || textTop >= float64(height) {
+		// Drawing outside the destination is clipped, so a fully clipped string
+		// leaves the current image unchanged without converting an extreme offset.
+		return ip
 	}
 
+	xPixel, err := watermarkPixelCoordinate(x)
+	if err != nil {
+		ip.err = err
+		return ip
+	}
+	yPixel, err := watermarkPixelCoordinate(y)
+	if err != nil {
+		ip.err = err
+		return ip
+	}
+	xDot, xShift := watermarkFixedCoordinate(xPixel)
+	yDot, yShift := watermarkFixedCoordinate(yPixel)
+
+	minX, ok := checkedSubtractInt(0, xShift)
+	if !ok {
+		ip.err = fmt.Errorf("watermark horizontal position overflows int")
+		return ip
+	}
+	maxX, ok := checkedSubtractInt(width, xShift)
+	if !ok {
+		ip.err = fmt.Errorf("watermark horizontal position overflows int")
+		return ip
+	}
+	minY, ok := checkedSubtractInt(0, yShift)
+	if !ok {
+		ip.err = fmt.Errorf("watermark vertical position overflows int")
+		return ip
+	}
+	maxY, ok := checkedSubtractInt(height, yShift)
+	if !ok {
+		ip.err = fmt.Errorf("watermark vertical position overflows int")
+		return ip
+	}
+	overlayBounds := image.Rectangle{
+		Min: image.Pt(minX, minY),
+		Max: image.Pt(maxX, maxY),
+	}
+
+	imgWithWatermark, err := newRGBAChecked(bounds)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid watermark image size: %w", err)
+		return ip
+	}
+	overlay, err := newRGBAChecked(overlayBounds)
+	if err != nil {
+		ip.err = fmt.Errorf("invalid watermark overlay size: %w", err)
+		return ip
+	}
+	draw.Draw(imgWithWatermark, bounds, ip.currentImage, bounds.Min, draw.Src)
+
+	dr := &font.Drawer{
+		Dst:  overlay,
+		Src:  image.NewUniform(cfg.Color),
+		Face: face,
+		Dot: fixed.Point26_6{
+			X: xDot,
+			Y: yDot,
+		},
+	}
 	dr.DrawString(cfg.Text)
+	draw.Draw(imgWithWatermark, bounds, overlay, overlayBounds.Min, draw.Over)
 
 	ip.currentImage = imgWithWatermark
 	return ip
+}
+
+const maxWatermarkFontSize = (float64(1<<31) - 1) / 64
+
+func validateWatermarkConfig(cfg *watermarkConfig) error {
+	if cfg.Text == "" {
+		return fmt.Errorf("watermark text cannot be empty")
+	}
+	if math.IsNaN(cfg.FontSize) || math.IsInf(cfg.FontSize, 0) || cfg.FontSize <= 0 {
+		return fmt.Errorf("watermark font size must be finite and positive")
+	}
+	if cfg.FontSize > maxWatermarkFontSize {
+		return fmt.Errorf("watermark font size exceeds the renderer's fixed-point range")
+	}
+	if isNilColor(cfg.Color) {
+		return fmt.Errorf("watermark color cannot be nil")
+	}
+	if cfg.Position < PositionTopLeft || cfg.Position > PositionCenter {
+		return fmt.Errorf("unknown watermark position: %d", cfg.Position)
+	}
+	if math.IsNaN(cfg.OffsetX) || math.IsInf(cfg.OffsetX, 0) || math.IsNaN(cfg.OffsetY) || math.IsInf(cfg.OffsetY, 0) {
+		return fmt.Errorf("watermark offsets must be finite")
+	}
+	switch cfg.fontSource {
+	case watermarkFontSourceBytes:
+		// Empty or invalid bytes are reported by opentype.Parse with context.
+	case watermarkFontSourcePath:
+		if cfg.FontPath == "" {
+			return fmt.Errorf("watermark font path cannot be empty")
+		}
+	default:
+		return fmt.Errorf("watermark font source is not configured")
+	}
+	return nil
+}
+
+func isNilColor(c color.Color) bool {
+	if c == nil {
+		return true
+	}
+	value := reflect.ValueOf(c)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice, reflect.UnsafePointer:
+		return value.IsNil()
+	default:
+		return false
+	}
+}
+
+func watermarkPixelCoordinate(value float64) (int, error) {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0, fmt.Errorf("watermark position is not finite")
+	}
+	value = math.Trunc(value)
+	maxInt := int(^uint(0) >> 1)
+	minInt := -maxInt - 1
+	if value < float64(minInt) || value >= float64(maxInt) {
+		return 0, fmt.Errorf("watermark position exceeds the image coordinate range")
+	}
+	return int(value), nil
+}
+
+func watermarkFixedCoordinate(pixel int) (fixed.Int26_6, int) {
+	const minFixedPixel = -(1 << 25)
+	const maxFixedPixel = (1 << 25) - 1
+	if pixel < minFixedPixel || pixel > maxFixedPixel {
+		return 0, pixel
+	}
+	return fixed.I(pixel), 0
+}
+
+func checkedSubtractInt(a, b int) (int, bool) {
+	maxInt := int(^uint(0) >> 1)
+	minInt := -maxInt - 1
+	if b > 0 && a < minInt+b {
+		return 0, false
+	}
+	if b < 0 && a > maxInt+b {
+		return 0, false
+	}
+	return a - b, true
 }
 
 // PerformanceOptions controls optimization settings for image processing.

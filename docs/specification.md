@@ -16,17 +16,17 @@ gopiq must provide a predictable, chainable image-processing API that:
 
 The existing API and Go 1.24 minimum are retained unless a later versioned change explicitly revises them.
 
-## 2. Baseline gaps
+## 2. Audit baseline and resolution status
 
-The following are known discrepancies between the current implementation and the target below:
+The initial audit found the following gaps. M0–M2 have resolved the first four listed items; the rest remain assigned to later milestones.
 
-- `go test -short .` passes, but `go test -short ./...` fails because multiple standalone examples declare `main` in the same package. The workflow also builds `./...`.
-- `WithFontPath` is exposed but watermark rendering does not load a font from that path.
-- Parallel grayscale indexing assumes zero-origin coordinates; some non-zero-origin bounds can produce invalid pixel indexes. Empty images can also reach a zero-worker division for certain performance options.
-- `Clone` is described as a deep copy in Go documentation but shares the image pointer; tests and concurrency docs currently expect shallow sharing.
-- GIF is described as decodable, but the package does not register the GIF decoder itself.
-- The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims that the implementation does not substantiate.
-- `TestPerformanceComparison` performs timing work as a regular test despite having no performance assertion.
+- **Resolved in M0:** Standalone examples previously redeclared `main` in one package, breaking `go build ./...` and `go test ./...`; they now build independently.
+- **Resolved in M1:** Parallel grayscale previously mishandled non-zero-origin bounds, and empty images or unsafe dimensions could reach invalid operations.
+- **Resolved in M2:** `WithFontPath` previously had no effect; font-source ordering and option validation are now implemented.
+- **Resolved in M2:** GIF was described as decodable but its decoder was not registered by the library.
+- **Open for M3:** `Clone` is described as a deep copy in Go documentation but shares the image pointer; tests and concurrency docs expect shallow sharing.
+- **Open for M4:** The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims the implementation does not substantiate.
+- **Open for M4:** `TestPerformanceComparison` performs timing work as a regular test despite having no performance assertion.
 
 ## 3. Requirements
 
@@ -57,7 +57,7 @@ The following are known discrepancies between the current implementation and the
 
 - **WM-1:** Font-source options are applied in order: the last supplied `WithFontPath` or `WithFontBytes` option selects the source. With neither option, the embedded Go font is used.
 - **WM-2:** `WithFontPath` must load and parse the requested file. File-read, parse, and face-construction failures must be returned through the processor error chain.
-- **WM-3:** Empty text, a nil option, a nil color, a non-finite or non-positive font size, non-finite offsets, and an unknown position must produce a processor error rather than a panic or silent fallback. Negative finite offsets remain valid and may move text partly outside the image.
+- **WM-3:** Empty text, a nil option, a nil color, a non-finite, non-positive, or renderer-unrepresentable font size, non-finite offsets, and an unknown position must produce a processor error rather than a panic or silent fallback. Offsets are anchor-relative: positive offsets inset corner anchors and move center-anchored text right/down; negative finite offsets remain valid and may move text partly outside the image.
 - **WM-4:** Named positions are calculated relative to the image bounds, including non-zero `Min` coordinates. Text outside the destination is clipped by drawing; it is not silently repositioned.
 - **WM-5:** Watermarking must preserve the source image and must be covered by tests for each anchor, custom fonts, errors, and non-zero-origin bounds.
 

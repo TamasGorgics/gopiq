@@ -1,0 +1,1224 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://TamasGorgics.github.io/gopiq/specification/">
+      
+      
+        <link rel="prev" href="../concurrency/">
+      
+      
+        <link rel="next" href="../roadmap/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Specification - gopiq - Go Image Processing</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/custom.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gopiq-specification" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="gopiq - Go Image Processing" class="md-header__button md-logo" aria-label="gopiq - Go Image Processing" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            gopiq - Go Image Processing
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Specification
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TamasGorgics/gopiq" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TamasGorgics/gopiq
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/core/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../performance/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Performance
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../concurrency/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Concurrency
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Specification
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../roadmap/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="gopiq - Go Image Processing" class="md-nav__button md-logo" aria-label="gopiq - Go Image Processing" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    gopiq - Go Image Processing
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TamasGorgics/gopiq" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TamasGorgics/gopiq
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processing Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/watermark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Watermark Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concurrency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-baseline-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Baseline gaps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-build-examples-and-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Build, examples, and documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-image-operations-and-bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Image operations and bounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-grayscale-and-performance-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Grayscale and performance options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-watermarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Watermarks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-error-handling-and-size-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 Error handling and size safety
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-concurrency-and-cloning-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7 Concurrency and cloning contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#38-tests-ci-and-performance-claims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.8 Tests, CI, and performance claims
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-planned-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Planned extensions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-release-acceptance-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Release acceptance gate
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-baseline-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Baseline gaps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-build-examples-and-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Build, examples, and documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-image-operations-and-bounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Image operations and bounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-grayscale-and-performance-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Grayscale and performance options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-watermarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Watermarks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-error-handling-and-size-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 Error handling and size safety
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-concurrency-and-cloning-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7 Concurrency and cloning contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#38-tests-ci-and-performance-claims" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.8 Tests, CI, and performance claims
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-planned-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Planned extensions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-release-acceptance-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Release acceptance gate
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="gopiq-specification">gopiq Specification<a class="headerlink" href="#gopiq-specification" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Draft implementation target · <strong>Scope:</strong> Correctness, safety, supported formats, concurrency, verification, and planned extensions</p>
+<p>This document defines the intended behavior of gopiq and the acceptance criteria for fixing the gaps found in the repository audit. “Must” and “must not” are requirements; “should” indicates a recommended implementation choice.</p>
+<h2 id="1-goals">1. Goals<a class="headerlink" href="#1-goals" title="Permanent link">&para;</a></h2>
+<p>gopiq must provide a predictable, chainable image-processing API that:</p>
+<ul>
+<li>builds and tests as a complete Go module, including its examples;</li>
+<li>handles ordinary and non-zero-origin image bounds without panicking;</li>
+<li>reports invalid operations through the processor error chain;</li>
+<li>has clear, testable format and concurrency guarantees; and</li>
+<li>makes performance claims only when supported by reproducible measurements.</li>
+</ul>
+<p>The existing API and Go 1.24 minimum are retained unless a later versioned change explicitly revises them.</p>
+<h2 id="2-baseline-gaps">2. Baseline gaps<a class="headerlink" href="#2-baseline-gaps" title="Permanent link">&para;</a></h2>
+<p>The following are known discrepancies between the current implementation and the target below:</p>
+<ul>
+<li><code>go test -short .</code> passes, but <code>go test -short ./...</code> fails because multiple standalone examples declare <code>main</code> in the same package. The workflow also builds <code>./...</code>.</li>
+<li><code>WithFontPath</code> is exposed but watermark rendering does not load a font from that path.</li>
+<li>Parallel grayscale indexing assumes zero-origin coordinates; some non-zero-origin bounds can produce invalid pixel indexes. Empty images can also reach a zero-worker division for certain performance options.</li>
+<li><code>Clone</code> is described as a deep copy in Go documentation but shares the image pointer; tests and concurrency docs currently expect shallow sharing.</li>
+<li>GIF is described as decodable, but the package does not register the GIF decoder itself.</li>
+<li>The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims that the implementation does not substantiate.</li>
+<li><code>TestPerformanceComparison</code> performs timing work as a regular test despite having no performance assertion.</li>
+</ul>
+<h2 id="3-requirements">3. Requirements<a class="headerlink" href="#3-requirements" title="Permanent link">&para;</a></h2>
+<h3 id="31-build-examples-and-documentation">3.1 Build, examples, and documentation<a class="headerlink" href="#31-build-examples-and-documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>BLD-1:</strong> Every Go package in the module must compile under <code>go build ./...</code> and <code>go test ./...</code>.</li>
+<li><strong>BLD-2:</strong> Each standalone example must be in its own package/directory (or an equivalent structure that avoids duplicate <code>main</code> declarations). Example instructions must work from the documented working directory.</li>
+<li><strong>BLD-3:</strong> Building examples must not require running them or writing generated images into tracked fixture locations.</li>
+<li><strong>BLD-4:</strong> The MkDocs site must build with the documented requirements, and the specification and roadmap must be discoverable in its navigation.</li>
+</ul>
+<h3 id="32-image-operations-and-bounds">3.2 Image operations and bounds<a class="headerlink" href="#32-image-operations-and-bounds" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>IMG-1:</strong> <code>Crop(x, y, width, height)</code> interprets <code>x</code> and <code>y</code> in the source image's coordinate space. The crop rectangle must have positive dimensions, fit within the source bounds, and be computed without integer overflow. The resulting image has bounds starting at <code>(0, 0)</code>.</li>
+<li><strong>IMG-2:</strong> <code>Resize(width, height)</code> requires positive target dimensions and produces a zero-origin image of the requested size. Invalid or unrepresentable buffer sizes must become chain errors rather than arithmetic-driven panics.</li>
+<li><strong>IMG-3:</strong> Operations must support valid images whose bounds do not start at <code>(0, 0)</code>, including subimages. Pixel loops must use coordinates or offsets appropriate to the image's actual bounds and stride.</li>
+<li><strong>IMG-4:</strong> Operations on empty bounds must have documented behavior and must not panic. Grayscale operations on an empty image are a no-op that preserves its bounds; operations that need source pixels, such as resizing an empty image, report an error.</li>
+<li><strong>IMG-5:</strong> Processing operations must not mutate the source image in place.</li>
+</ul>
+<h3 id="33-grayscale-and-performance-options">3.3 Grayscale and performance options<a class="headerlink" href="#33-grayscale-and-performance-options" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>GRAY-1:</strong> <code>Grayscale</code> and <code>GrayscaleFast</code> must support arbitrary valid bounds and subimages without out-of-range buffer access.</li>
+<li><strong>GRAY-2:</strong> Both methods must use the same documented BT.709 luma calculation and produce identical pixel values for the same input. For the current 8-bit RGBA implementation, the calculation is <code>uint8(0.2126*R + 0.7152*G + 0.0722*B)</code>; output RGB channels are equal and alpha is preserved.</li>
+<li><strong>GRAY-3:</strong> Parallel work must use at least one worker only when there are rows to process, and no more workers than rows or the configured maximum. Empty images must never reach a division by zero.</li>
+<li><strong>GRAY-4:</strong> <code>MaxGoroutines &lt;= 0</code> uses the documented runtime default. <code>MinSizeForParallel &lt;= 0</code> means no minimum threshold for a non-empty image; it must not make empty-image processing unsafe. <code>EnableParallelProcessing == false</code> always selects the sequential path.</li>
+<li><strong>GRAY-5:</strong> Default options and threshold behavior must be documented and tested. <code>SetPerformanceOptions</code> must remain safe to call concurrently with processor methods.</li>
+</ul>
+<h3 id="34-watermarks">3.4 Watermarks<a class="headerlink" href="#34-watermarks" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>WM-1:</strong> Font-source options are applied in order: the last supplied <code>WithFontPath</code> or <code>WithFontBytes</code> option selects the source. With neither option, the embedded Go font is used.</li>
+<li><strong>WM-2:</strong> <code>WithFontPath</code> must load and parse the requested file. File-read, parse, and face-construction failures must be returned through the processor error chain.</li>
+<li><strong>WM-3:</strong> Empty text, a nil option, a nil color, a non-finite or non-positive font size, non-finite offsets, and an unknown position must produce a processor error rather than a panic or silent fallback. Negative finite offsets remain valid and may move text partly outside the image.</li>
+<li><strong>WM-4:</strong> Named positions are calculated relative to the image bounds, including non-zero <code>Min</code> coordinates. Text outside the destination is clipped by drawing; it is not silently repositioned.</li>
+<li><strong>WM-5:</strong> Watermarking must preserve the source image and must be covered by tests for each anchor, custom fonts, errors, and non-zero-origin bounds.</li>
+</ul>
+<h3 id="35-formats">3.5 Formats<a class="headerlink" href="#35-formats" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>FMT-1:</strong> JPEG and PNG decoding and encoding remain supported and covered by round-trip tests.</li>
+<li><strong>FMT-2:</strong> GIF decoding is supported independently of whether the importing application imports <code>image/gif</code>; the library registers the decoder itself.</li>
+<li><strong>FMT-3:</strong> GIF encoding remains unsupported until a palette-quantization policy is selected. Calls to encode GIF must return a clear error, not imply successful support.</li>
+<li><strong>FMT-4:</strong> <code>FormatFromString</code>, <code>ImageFormat.String</code>, and format comments must agree with the formats actually accepted for decoding and encoding.</li>
+</ul>
+<h3 id="36-error-handling-and-size-safety">3.6 Error handling and size safety<a class="headerlink" href="#36-error-handling-and-size-safety" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SAFE-1:</strong> Chainable operations preserve the first error and do not continue processing after it. Export methods return that error.</li>
+<li><strong>SAFE-2:</strong> Crop arithmetic and image-buffer size calculations must be checked for integer overflow before use or allocation.</li>
+<li><strong>SAFE-3:</strong> Invalid dimensions and configuration must return errors through the existing API. The library is not required to recover from operating-system out-of-memory termination.</li>
+<li><strong>SAFE-4:</strong> Decoding limits for encoded bytes, dimensions, and total pixels are a planned extension; callers must not be told that untrusted input is resource-bounded until those limits exist.</li>
+</ul>
+<h3 id="37-concurrency-and-cloning-contract">3.7 Concurrency and cloning contract<a class="headerlink" href="#37-concurrency-and-cloning-contract" title="Permanent link">&para;</a></h3>
+<p>To preserve current behavior and avoid an implicit full-image copy, the v1 <code>Clone</code> contract is <strong>shallow</strong>:</p>
+<ul>
+<li><strong>CON-1:</strong> <code>Clone</code> copies processor state and performance options but shares the current image reference. Go documentation, README, tests, and concurrency docs must say this; they must not call it a deep copy or promise independent backing pixels.</li>
+<li><strong>CON-2:</strong> Processing operations treat their input image as read-only and create a new destination. Clones can therefore process the shared source independently as long as the source is not externally mutated.</li>
+<li><strong>CON-3:</strong> Methods on one processor must be internally race-safe. Individual calls are synchronized, but a multi-call chain is not an atomic transaction and may interleave with calls from another goroutine.</li>
+<li><strong>CON-4:</strong> <code>Image()</code> returns the current image for reading. The caller must treat it, and images passed to constructors, as read-only while the processor or its clones may be used concurrently. Mutating an image through a concrete-type assertion is outside the thread-safety guarantee.</li>
+<li><strong>CON-5:</strong> Race tests must exercise concurrent reads and state-changing calls on the same processor, not only writes to separate clones.</li>
+</ul>
+<p>If independent pixel storage is later needed, it should be provided by an explicitly named deep-copy API rather than changing the meaning of <code>Clone</code> silently.</p>
+<h3 id="38-tests-ci-and-performance-claims">3.8 Tests, CI, and performance claims<a class="headerlink" href="#38-tests-ci-and-performance-claims" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Q-1:</strong> CI must build and test all packages, run the race detector, and include <code>go vet</code> and the configured linter. It must build the documentation site.</li>
+<li><strong>Q-2:</strong> Tests must cover non-zero-origin images, subimages, empty bounds, alpha preservation, grayscale equivalence, invalid sizes/options, font-path loading, and the declared format behavior.</li>
+<li><strong>Q-3:</strong> Timing comparisons belong in Go benchmarks or a separately invoked performance tool, not ordinary unit tests. Unit tests must not depend on machine speed.</li>
+<li><strong>Q-4:</strong> Benchmark results must include enough environment and workload detail to be reproduced. Documentation must not present old measurements as universal guarantees.</li>
+<li><strong>Q-5:</strong> Pooling or SIMD optimizations may be claimed only when the implementation uses them and reproducible benchmarks demonstrate a benefit. Otherwise, unused pool code and unsupported claims should be removed.</li>
+<li><strong>Q-6:</strong> The supported Go-version policy must be explicit. CI must test the module's declared minimum (currently Go 1.24) and, when selected, the latest supported stable version.</li>
+</ul>
+<h2 id="4-planned-extensions">4. Planned extensions<a class="headerlink" href="#4-planned-extensions" title="Permanent link">&para;</a></h2>
+<p>These are not prerequisites for the correctness milestones above; they are future capabilities to consider and scope separately.</p>
+<ul>
+<li><strong>EXT-1 — Streaming I/O:</strong> Add reader-based construction and writer-based encoding so callers need not hold the entire encoded image in a byte slice. Existing byte APIs remain supported wrappers.</li>
+<li><strong>EXT-2 — Decode limits:</strong> Add configurable limits for encoded input size, width, height, and total pixels, with validation before full decode where possible.</li>
+<li><strong>EXT-3 — Aspect-ratio operations:</strong> Add explicit fit/fill or proportional-resize APIs with documented rounding, cropping, and upscaling behavior.</li>
+<li><strong>EXT-4 — Additional operations:</strong> Consider rotation, flips, and image watermarks with clear bounds, anchor, and alpha-compositing behavior.</li>
+<li><strong>EXT-5 — Additional formats:</strong> Consider GIF encoding only with an explicit quantization policy; assess additional formats and dependencies independently.</li>
+<li><strong>EXT-6 — Bounded batch processing:</strong> Consider a worker-pool API with bounded concurrency, ordering guarantees, and cancellation behavior for batch workloads.</li>
+<li><strong>EXT-7 — Benchmark-led optimization:</strong> Profile representative workloads before adding pooling, fixed-point arithmetic, SIMD, or other specialized paths. Keep a simple correct fallback.</li>
+<li><strong>EXT-8 — Expanded assurance:</strong> Add fuzzing for malformed image data and options, broader platform/version CI, and automated checks that documentation examples stay compilable.</li>
+</ul>
+<h2 id="5-release-acceptance-gate">5. Release acceptance gate<a class="headerlink" href="#5-release-acceptance-gate" title="Permanent link">&para;</a></h2>
+<p>A release implementing the corrective requirements is ready when all of the following hold:</p>
+<ol>
+<li><code>go build ./...</code> and <code>go test ./...</code> pass.</li>
+<li><code>go test -race ./...</code>, <code>go vet ./...</code>, and the configured linter pass.</li>
+<li>The MkDocs site builds and all example instructions work as written.</li>
+<li>Requirements in sections 3.2–3.8 have regression tests or an explicit documented exception.</li>
+<li>Performance documentation describes measured behavior without unsupported guarantees.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>

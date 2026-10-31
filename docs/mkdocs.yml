@@ -43,6 +43,8 @@ nav:
     - 'Watermark Options': 'api/watermark.md'
   - 'Performance': 'performance.md'
   - 'Concurrency': 'concurrency.md'
+  - 'Specification': 'specification.md'
+  - 'Roadmap': 'roadmap.md'
 
 extra_css:
   - assets/custom.css
@@ -55,4 +57,4 @@ markdown_extensions:
   - pymdownx.superfences
   - admonition
   - toc:
-      permalink: true 
+      permalink: true

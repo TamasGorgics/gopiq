@@ -917,6 +917,7 @@
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nx">processor</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">NewWithPerformanceOptions</span><span class="p">(</span><span class="nx">image</span><span class="p">,</span><span class="w"> </span><span class="nx">opts</span><span class="p">)</span>
 </code></pre></div>
+<p>The default options enable parallel processing at 10,000 pixels and use <code>runtime.NumCPU()</code> goroutines. A <code>MaxGoroutines</code> value less than or equal to zero uses that runtime default; a <code>MinSizeForParallel</code> value less than or equal to zero allows parallel processing for any non-empty image. <code>GrayscaleFast()</code> leaves empty images unchanged, and disabling parallel processing always selects the sequential path.</p>
 <h3 id="scalability">Scalability<a class="headerlink" href="#scalability" title="Permanent link">&para;</a></h3>
 <p><strong>Parallel Processing Performance</strong> (1920x1080 images):
 - 1 goroutine: 5.87ms
@@ -929,7 +930,7 @@
 <li><strong>Parallel Processing</strong>: Utilizes multiple CPU cores automatically</li>
 <li><strong>Memory Pooling</strong>: Reduces garbage collection pressure</li>
 <li><strong>SIMD-friendly Operations</strong>: CPU-optimized pixel processing</li>
-<li><strong>ITU-R BT.709 Grayscale</strong>: Professional-grade color conversion </li>
+<li><strong>ITU-R BT.709 Grayscale</strong>: Professional-grade color conversion</li>
 </ol>
 
 

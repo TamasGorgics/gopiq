@@ -712,12 +712,13 @@
 <h1 id="processing-operations">Processing Operations<a class="headerlink" href="#processing-operations" title="Permanent link">&para;</a></h1>
 <p>These methods are chainable and perform image manipulation.</p>
 <ul>
-<li><code>Resize(width, height int)</code> - Resize using Catmull-Rom interpolation</li>
-<li><code>Crop(x, y, width, height int)</code> - Crop to specified rectangle</li>
-<li><code>Grayscale()</code> - Convert to grayscale</li>
-<li><code>GrayscaleFast()</code> - Convert to grayscale using parallel processing for a significant speed boost.</li>
-<li><code>AddTextWatermark(text, ...options)</code> - Add text watermark </li>
+<li><code>Resize(width, height int)</code> - Resize a non-empty image using Catmull-Rom interpolation; invalid or unrepresentable sizes set a chain error.</li>
+<li><code>Crop(x, y, width, height int)</code> - Crop using source-image coordinates; the result has zero-origin bounds.</li>
+<li><code>Grayscale()</code> - Convert to grayscale; empty images are left unchanged.</li>
+<li><code>GrayscaleFast()</code> - Convert to grayscale using parallel processing when enabled and above the configured threshold; empty images are left unchanged.</li>
+<li><code>AddTextWatermark(text, ...options)</code> - Add text watermark; an empty destination image returns a chain error.</li>
 </ul>
+<p>Crop and resize reject invalid dimensions. Cropping uses absolute coordinates from the source image bounds and returns a chain error for empty bounds. Resizing an image with empty bounds also returns a chain error.</p>
 
 
 

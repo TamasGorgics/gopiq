@@ -1084,7 +1084,7 @@
 <li><strong>IMG-1:</strong> <code>Crop(x, y, width, height)</code> interprets <code>x</code> and <code>y</code> in the source image's coordinate space. The crop rectangle must have positive dimensions, fit within the source bounds, and be computed without integer overflow. The resulting image has bounds starting at <code>(0, 0)</code>.</li>
 <li><strong>IMG-2:</strong> <code>Resize(width, height)</code> requires positive target dimensions and produces a zero-origin image of the requested size. Invalid or unrepresentable buffer sizes must become chain errors rather than arithmetic-driven panics.</li>
 <li><strong>IMG-3:</strong> Operations must support valid images whose bounds do not start at <code>(0, 0)</code>, including subimages. Pixel loops must use coordinates or offsets appropriate to the image's actual bounds and stride.</li>
-<li><strong>IMG-4:</strong> Operations on empty bounds must have documented behavior and must not panic. Grayscale operations on an empty image are a no-op that preserves its bounds; operations that need source pixels, such as resizing an empty image, report an error.</li>
+<li><strong>IMG-4:</strong> Operations on empty bounds must have documented behavior and must not panic. Grayscale operations on an empty image are a no-op that preserves its bounds. Crop, resize, and text-watermark operations on an empty image report a chain error because they cannot produce a valid result.</li>
 <li><strong>IMG-5:</strong> Processing operations must not mutate the source image in place.</li>
 </ul>
 <h3 id="33-grayscale-and-performance-options">3.3 Grayscale and performance options<a class="headerlink" href="#33-grayscale-and-performance-options" title="Permanent link">&para;</a></h3>

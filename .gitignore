@@ -11,8 +11,9 @@ coverage.txt
 *.dll
 *.so
 *.dylib
-gopiq
-main
+/gopiq
+/main
+/bin/
 
 # Test binary, built with `go test -c`
 *.test

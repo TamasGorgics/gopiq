@@ -63,7 +63,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M5 — Add a standalone CLI
 
-**Priority:** P2 · **Requirements:** CLI-1–CLI-5
+**Status:** Complete · **Priority:** P2 · **Requirements:** CLI-1–CLI-5
 
 - Add a thin `cmd/gopiq` entry point and testable command logic under `internal/cli`.
 - Implement `convert`, `resize`, `crop`, `grayscale`, and `watermark` commands with help and version output.

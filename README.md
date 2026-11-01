@@ -17,6 +17,7 @@ A fluent, thread-safe Go image processing library with chainable operations.
 - **Comprehensive Error Handling**: Errors propagate through the chain
 - **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
 - **Text Watermarks**: Add customizable text overlays with font control
+- **Standalone CLI**: Use the same operations from the command line
 
 The root `gopiq` package is the supported public API; implementation details live in `internal/engine`. See [Architecture](docs/architecture.md) for the package boundaries and planned CLI layout.
 
@@ -25,6 +26,22 @@ The root `gopiq` package is the supported public API; implementation details liv
 ```bash
 go get github.com/TamasGorgics/gopiq
 ```
+
+## CLI
+
+Install the standalone command:
+
+```bash
+go install github.com/TamasGorgics/gopiq/cmd/gopiq@latest
+```
+
+```bash
+gopiq resize --width 800 --height 600 input.jpg output.png
+gopiq grayscale --fast input.jpg output.png
+gopiq watermark --text "© 2026" --position bottom-right input.jpg output.png
+```
+
+See the [CLI documentation](docs/cli.md) for commands, flags, stdin/stdout use, and exit codes.
 
 ## Quick Start
 

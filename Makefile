@@ -14,17 +14,22 @@ GOFMT=$(GOCMD) fmt
 LINT_CMD=golangci-lint
 
 # Build variables
-BINARY_NAME=gopiq
-BINARY_UNIX=$(BINARY_NAME)_unix
+BIN_DIR=bin
+BINARY=$(BIN_DIR)/gopiq
 
-.PHONY: all build test cover bench vet lint clean help docs-serve docs-build
+.PHONY: all build install test cover bench vet lint clean help docs-serve docs-build
 
 all: build
 
 # Build commands
 build:
 	@echo "Building gopiq..."
-	@$(GOBUILD) -o $(BINARY_NAME) -v
+	@mkdir -p $(BIN_DIR)
+	@$(GOBUILD) -o $(BINARY) -v ./cmd/gopiq
+
+install:
+	@echo "Installing gopiq..."
+	@$(GOINSTALL) ./cmd/gopiq
 
 # Test commands
 test:
@@ -34,7 +39,7 @@ test:
 # Test with coverage commands
 cover:
 	@echo "Running tests with coverage..."
-	@$(GOTEST) -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq,github.com/TamasGorgics/gopiq/internal/engine ./...
+	@$(GOTEST) -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq,github.com/TamasGorgics/gopiq/internal/engine,github.com/TamasGorgics/gopiq/internal/cli ./...
 	@echo "To view coverage report, run: make cover-html"
 
 cover-html: cover
@@ -68,14 +73,16 @@ docs-build:
 clean:
 	@echo "Cleaning up..."
 	@$(GOCLEAN)
-	@rm -f $(BINARY_NAME) $(BINARY_UNIX) coverage.out
+	@rm -rf $(BIN_DIR)
+	@rm -f coverage.out
 
 # Help command
 help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Targets:"
-	@echo "  build         Build the application binary"
+	@echo "  build         Build the gopiq CLI into bin/gopiq"
+	@echo "  install       Install the gopiq CLI with go install"
 	@echo "  test          Run tests with race condition detection"
 	@echo "  cover         Run tests and generate a coverage profile"
 	@echo "  cover-html    Open the HTML coverage report in a browser"

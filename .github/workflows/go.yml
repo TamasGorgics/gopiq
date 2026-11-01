@@ -37,7 +37,7 @@ jobs:
         version: v2.15.0
 
     - name: Test and collect library coverage
-      run: go test -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq,github.com/TamasGorgics/gopiq/internal/engine ./...
+      run: go test -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq,github.com/TamasGorgics/gopiq/internal/engine,github.com/TamasGorgics/gopiq/internal/cli ./...
 
     - name: Upload coverage to Codecov
       if: matrix.go == '1.27.3'

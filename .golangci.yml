@@ -77,6 +77,9 @@ linters:
         - fmt.Print
         - fmt.Printf
         - fmt.Println
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
     exhaustive:
       default-signifies-exhaustive: true
     funlen:

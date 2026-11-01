@@ -43,6 +43,7 @@ nav:
     - 'Watermark Options': 'api/watermark.md'
   - 'Performance': 'performance.md'
   - 'Concurrency': 'concurrency.md'
+  - 'Architecture': 'architecture.md'
   - 'Specification': 'specification.md'
   - 'Roadmap': 'roadmap.md'
 

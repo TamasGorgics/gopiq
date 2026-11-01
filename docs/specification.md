@@ -96,6 +96,14 @@ If independent pixel storage is later needed, it should be provided by an explic
 - **Q-5:** Pooling or SIMD optimizations may be claimed only when the implementation uses them and reproducible benchmarks demonstrate a benefit. Otherwise, unused pool code and unsupported claims should be removed.
 - **Q-6:** The supported Go-version policy must be explicit. CI must test the module's declared minimum (currently Go 1.27.0) and the latest supported stable patch release in that Go line.
 
+### 3.9 Command-line interface
+
+- **CLI-1:** The module must provide a `cmd/gopiq` main package that builds with `go build ./cmd/gopiq` and installs with `go install github.com/TamasGorgics/gopiq/cmd/gopiq@latest`. Command parsing and execution logic must live in a testable internal package rather than in `main`.
+- **CLI-2:** The CLI must provide documented `convert`, `resize`, `crop`, `grayscale`, and `watermark` commands, plus help and version output. Required arguments, optional flags, and operation semantics must match the public library API.
+- **CLI-3:** The CLI must read input from a file or standard input and write output to a file or standard output. Output format is inferred from the destination extension when possible and may be overridden with `--format`. JPEG, PNG, and GIF input are supported; JPEG and PNG output are supported; GIF output must return a clear unsupported error.
+- **CLI-4:** Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.
+- **CLI-5:** The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, unsupported GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.
+
 ## 4. Planned extensions
 
 These are not prerequisites for the correctness milestones above; they are future capabilities to consider and scope separately.
@@ -116,5 +124,5 @@ A release implementing the corrective requirements is ready when all of the foll
 1. `go build ./...` and `go test ./...` pass.
 2. `go test -race ./...`, `go vet ./...`, and the configured linter pass.
 3. The MkDocs site builds and all example instructions work as written.
-4. Requirements in sections 3.2–3.8 have regression tests or an explicit documented exception.
+4. Requirements in sections 3.2–3.8 have regression tests or an explicit documented exception. The CLI requirements in section 3.9 apply to releases that ship the CLI.
 5. Performance documentation describes measured behavior without unsupported guarantees.

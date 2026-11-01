@@ -61,7 +61,19 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 **Exit criteria:** Ordinary tests are correctness-focused and stable across machines; all release-gate checks in the specification pass.
 
-### M5 — Add streaming I/O and decode limits
+### M5 — Add a standalone CLI
+
+**Priority:** P2 · **Requirements:** CLI-1–CLI-5
+
+- Add a thin `cmd/gopiq` entry point and testable command logic under `internal/cli`.
+- Implement `convert`, `resize`, `crop`, `grayscale`, and `watermark` commands with help and version output.
+- Support file and standard input/output, format inference and `--format`, clear GIF-output errors, documented exit codes, and safe output writes.
+- Add command integration tests, CLI documentation, Makefile build/install targets, and coverage reporting for the CLI package.
+- Keep the CLI dependent only on the public root package; do not import `internal/engine` directly.
+
+**Exit criteria:** The CLI builds and installs, every command and documented flag is covered by tests, format and exit-code behavior matches the specification, CLI documentation is published, and CI passes.
+
+### M6 — Add streaming I/O and decode limits
 
 **Priority:** P2 · **Requirements:** EXT-1, EXT-2
 
@@ -71,7 +83,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 **Exit criteria:** Streaming callers avoid mandatory full encoded-buffer copies, and configured decode limits are enforced by tests including oversized and malformed inputs.
 
-### M6 — Expand transformation and format capabilities
+### M7 — Expand transformation and format capabilities
 
 **Priority:** P2 · **Requirements:** EXT-3–EXT-5
 
@@ -81,7 +93,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 **Exit criteria:** Each selected feature has a written API contract, pixel-level tests, and documentation before implementation is considered complete.
 
-### M7 — Optimize measured workloads and support bounded batches
+### M8 — Optimize measured workloads and support bounded batches
 
 **Priority:** P3 · **Requirements:** EXT-6–EXT-8
 

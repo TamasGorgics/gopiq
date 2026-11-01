@@ -12,9 +12,10 @@ A fluent, thread-safe Go image processing library with chainable operations.
 
 - **Fluent Interface**: Chain multiple operations together naturally
 - **Thread-Safe**: Individually synchronized methods; multi-call chains are not atomic
-- **High-Quality Processing**: Uses Catmull-Rom interpolation for resizing
+- **High-Quality Processing**: Catmull-Rom resizing plus exact, fit, and fill modes
+- **Transformations**: Cropping, horizontal/vertical flips, and 90/180/270-degree rotation
 - **Comprehensive Error Handling**: Errors propagate through the chain
-- **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
+- **Multiple Format Support**: JPEG, PNG, and GIF input/output; GIF output uses a documented lossy palette policy
 - **Text Watermarks**: Add customizable text overlays with font control
 - **Streaming I/O and Decode Limits**: Decode from readers, encode to writers, and bound untrusted input
 - **Standalone CLI**: Run common operations without writing Go code

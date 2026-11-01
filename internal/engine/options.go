@@ -23,7 +23,7 @@ func DefaultOptions() Options {
 	}
 }
 
-// Format identifies a recognized image format. GIF is decode-only.
+// Format identifies a recognized image format.
 type Format int
 
 // Recognized image formats.

@@ -13,7 +13,7 @@ Resize an image to exact dimensions using Catmull-Rom interpolation.
 Flags:
   --width int       target width (required, positive)
   --height int      target height (required, positive)
-  --format string   output format: jpeg or png
+  --format string   output format: jpeg, png, or gif
 
 Format is inferred from the output extension when omitted.
 Use "-" for standard input or standard output.

@@ -108,10 +108,10 @@ gopiq --version
 ## Input and output formats
 
 - Input format is detected from the image content. JPEG, PNG, and GIF are supported.
-- Output format is inferred from `.jpg`, `.jpeg`, or `.png`.
-- `--format jpeg|png` overrides the output extension.
+- Output format is inferred from `.jpg`, `.jpeg`, `.png`, or `.gif`.
+- `--format jpeg|png|gif` overrides the output extension.
 - When output is `-`, `--format` is required.
-- GIF output is unsupported because palette quantization is not implemented. GIF input is supported.
+- GIF output uses the Go standard-library encoder: Plan 9 256-color palette, Floyd–Steinberg dithering, white alpha flattening, and a single frame.
 
 Examples:
 
@@ -136,6 +136,6 @@ Errors are written to standard error. Successful image output written to stdout 
 
 - One operation per invocation; use standard pipelines for multiple steps.
 - No aspect-ratio resize fit/fill.
-- No GIF output.
 - No batch or directory processing.
 - No streaming decode limits; the CLI reads the complete input before processing.
+- GIF output is lossy and single-frame.

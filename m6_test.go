@@ -117,10 +117,6 @@ func TestM6ToWriterErrors(t *testing.T) {
 	if err := processor.ToWriter(m6ErrorWriter{}, FormatPNG); err == nil {
 		t.Fatal("ToWriter ignored a writer error")
 	}
-	if err := processor.ToWriter(io.Discard, FormatGIF); err == nil {
-		t.Fatal("ToWriter accepted unsupported GIF output")
-	}
-
 	broken := New(nil)
 	if err := broken.ToWriter(io.Discard, FormatPNG); err == nil {
 		t.Fatal("ToWriter on an errored processor succeeded")

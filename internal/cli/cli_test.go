@@ -276,7 +276,7 @@ func TestFormatAndGIFHandling(t *testing.T) {
 	dir := t.TempDir()
 	input := writeTestFile(t, dir, "input.png", pngBytes(t, testImage(4, 3)))
 
-	for _, name := range []string{"out.jpg", "out.jpeg", "out.png"} {
+	for _, name := range []string{"out.jpg", "out.jpeg", "out.png", "out.gif"} {
 		output := filepath.Join(dir, name)
 		code, _, stderr := runCLI([]string{"convert", input, output}, nil)
 		if code != exitSuccess {
@@ -294,9 +294,13 @@ func TestFormatAndGIFHandling(t *testing.T) {
 		t.Fatalf("stdout without format = code %d, stderr %q", code, stderr)
 	}
 
-	code, _, stderr = runCLI([]string{"convert", "--format", "gif", input, filepath.Join(dir, "out.gif")}, nil)
-	if code != exitFailure || !bytes.Contains(stderr, []byte("GIF output")) {
+	gifOutput := filepath.Join(dir, "format.gif")
+	code, _, stderr = runCLI([]string{"convert", "--format", "gif", input, gifOutput}, nil)
+	if code != exitSuccess {
 		t.Fatalf("gif format = code %d, stderr %q", code, stderr)
+	}
+	if _, format := decodeImage(t, mustReadFile(t, gifOutput)); format != "gif" {
+		t.Fatalf("gif format output = %q, want gif", format)
 	}
 
 	const onePixelGIF = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
@@ -305,12 +309,12 @@ func TestFormatAndGIFHandling(t *testing.T) {
 		t.Fatalf("decode GIF fixture: %v", err)
 	}
 	gifInput := writeTestFile(t, dir, "input.gif", gifData)
-	gifOutput := filepath.Join(dir, "from-gif.png")
-	code, _, stderr = runCLI([]string{"convert", gifInput, gifOutput}, nil)
+	fromGIF := filepath.Join(dir, "from-gif.png")
+	code, _, stderr = runCLI([]string{"convert", gifInput, fromGIF}, nil)
 	if code != exitSuccess {
 		t.Fatalf("GIF input exit code = %d, stderr = %s", code, stderr)
 	}
-	img, _ := decodeImage(t, mustReadFile(t, gifOutput))
+	img, _ := decodeImage(t, mustReadFile(t, fromGIF))
 	if got, want := img.Bounds().Size(), image.Pt(1, 1); got != want {
 		t.Fatalf("GIF output size = %v, want %v", got, want)
 	}
@@ -428,16 +432,15 @@ func TestOutputOverwriteAndFailures(t *testing.T) {
 	}
 
 	gifOutput := filepath.Join(dir, "existing.gif")
-	sentinel := []byte("sentinel")
-	if err := os.WriteFile(gifOutput, sentinel, 0o600); err != nil {
+	if err := os.WriteFile(gifOutput, []byte("sentinel"), 0o600); err != nil {
 		t.Fatalf("write GIF sentinel: %v", err)
 	}
 	code, _, stderr = runCLI([]string{"convert", input, gifOutput}, nil)
-	if code != exitFailure || !bytes.Contains(stderr, []byte("GIF output")) {
+	if code != exitSuccess {
 		t.Fatalf("GIF output = code %d, stderr %q", code, stderr)
 	}
-	if got := mustReadFile(t, gifOutput); !bytes.Equal(got, sentinel) {
-		t.Fatalf("GIF failure changed destination: %q", got)
+	if _, format := decodeImage(t, mustReadFile(t, gifOutput)); format != "gif" {
+		t.Fatalf("GIF overwrite format = %q, want gif", format)
 	}
 }
 

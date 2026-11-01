@@ -15,6 +15,6 @@ This section covers the core methods for creating and managing `ImageProcessor` 
 
 Methods are individually synchronized, but a multi-call chain is not atomic. Images passed to `New` and images returned by `Image` must be treated as read-only while the processor or its clones may be used concurrently. `Clone` does not deep-copy pixels.
 
-`ToBytes` and `ToWriter` support JPEG and PNG output. GIF is decode-only; attempting to encode GIF returns an error.
+`ToBytes` and `ToWriter` support JPEG, PNG, and GIF output. GIF output uses the Go standard-library Plan 9 palette, Floyd–Steinberg dithering, white alpha flattening, and a single frame.
 
 See [Streaming and Decode Limits](../streaming.md) for `DecodeLimits`, `DefaultDecodeLimits`, `ErrDecodeLimit`, ownership, and writer error behavior.

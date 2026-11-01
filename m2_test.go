@@ -1,13 +1,13 @@
 package gopiq
 
 import (
+	"bytes"
 	"encoding/base64"
 	"image"
 	"image/color"
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"golang.org/x/image/font/gofont/goregular"
@@ -283,10 +283,12 @@ func TestM2GIFDecodingAndFormatIdentifiers(t *testing.T) {
 			t.Errorf("ImageFormat(%d).String() = %q, want %q", tc.format, got, tc.want)
 		}
 	}
-	if _, err := processor.ToBytes(FormatGIF); err == nil {
-		t.Fatal("GIF encoding unexpectedly succeeded")
-	} else if !strings.Contains(err.Error(), "GIF encoding is unsupported") {
-		t.Fatalf("GIF encode error is not clear: %v", err)
+	encoded, err := processor.ToBytes(FormatGIF)
+	if err != nil {
+		t.Fatalf("GIF encoding failed: %v", err)
+	}
+	if _, format, err := image.Decode(bytes.NewReader(encoded)); err != nil || format != "gif" {
+		t.Fatalf("GIF output = format %q, error %v", format, err)
 	}
 }
 

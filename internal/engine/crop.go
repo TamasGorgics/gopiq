@@ -11,7 +11,10 @@ import (
 func (p *Processor) Crop(x, y, width, height int) *Processor {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	return p.cropLocked(x, y, width, height)
+}
 
+func (p *Processor) cropLocked(x, y, width, height int) *Processor {
 	if p.err != nil {
 		return p
 	}

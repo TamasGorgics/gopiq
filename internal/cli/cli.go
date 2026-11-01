@@ -180,5 +180,5 @@ func positionalArgs(fs *flag.FlagSet, usage string) (string, string, error) {
 }
 
 func addFormatFlag(fs *flag.FlagSet, value *string) {
-	fs.StringVar(value, "format", "", "output format: jpeg or png")
+	fs.StringVar(value, "format", "", "output format: jpeg, png, or gif")
 }

@@ -5,7 +5,7 @@ const convertUsage = `Usage: gopiq convert [flags] <input> <output>
 Decode an image and encode it in the output format.
 
 Flags:
-  --format string   output format: jpeg or png
+  --format string   output format: jpeg, png, or gif
 
 Format is inferred from the output extension when omitted.
 Use "-" for standard input or standard output.

@@ -20,7 +20,7 @@ Flags:
   --color string      text color: #RGB, #RGBA, #RRGGBB, or #RRGGBBAA
   --position string   top-left, top-right, bottom-left, bottom-right, or center
   --offset string     offset from the anchor as X,Y pixels
-  --format string     output format: jpeg or png
+  --format string     output format: jpeg, png, or gif
 
 Format is inferred from the output extension when omitted.
 Use "-" for standard input or standard output.

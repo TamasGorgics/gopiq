@@ -84,7 +84,7 @@ if err := processor.ToWriter(output, gopiq.FormatPNG); err != nil {
 
 `ToWriter` writes directly to the supplied writer and does not close it. It does not buffer the complete encoded image. A write failure may leave partially written output; use `ToBytes` when an in-memory result is required.
 
-`ToWriter` supports JPEG and PNG output. GIF encoding remains unsupported because palette quantization is not implemented.
+`ToWriter` supports JPEG, PNG, and GIF output. GIF output uses the Go standard-library Plan 9 256-color palette with Floyd–Steinberg dithering, flattens alpha over white, and writes a single frame.
 
 ## Ownership and resources
 

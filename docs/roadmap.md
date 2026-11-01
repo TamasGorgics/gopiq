@@ -33,7 +33,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 - Implement `WithFontPath` and deterministic font-source option ordering.
 - Validate nil/invalid watermark options and calculate all positions relative to image bounds.
-- Register GIF decoding in the library and retain an explicit error for unsupported GIF encoding.
+- Register GIF decoding in the library; GIF encoding was added later in M7 with an explicit policy.
 - Add tests for font files, option errors, anchor positions, non-zero bounds, and JPEG/PNG/GIF behavior.
 
 **Exit criteria:** Every advertised option has observable behavior or is removed; format conversion and errors match the specification.
@@ -85,11 +85,11 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M7 — Expand transformation and format capabilities
 
-**Priority:** P2 · **Requirements:** EXT-3–EXT-5
+**Status:** Complete · **Priority:** P2 · **Requirements:** EXT-3–EXT-5
 
-- Specify proportional resize fit/fill behavior, including rounding, crop, and upscaling rules.
-- Evaluate rotation, flips, and image watermarks with bounds and alpha-compositing semantics.
-- Assess additional formats independently; implement GIF output only after choosing and documenting palette quantization.
+- Implement proportional resize fit/fill behavior, including rounding, crop, and upscaling rules.
+- Implement flips and 90-degree rotations; evaluate image watermarks for a later milestone with a separate alpha/ownership contract.
+- Implement single-frame GIF output with a documented standard-library palette policy; assess other formats independently.
 
 **Exit criteria:** Each selected feature has a written API contract, pixel-level tests, and documentation before implementation is considered complete.
 

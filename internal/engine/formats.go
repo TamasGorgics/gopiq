@@ -3,10 +3,13 @@ package engine
 import (
 	"fmt"
 	"image"
-	_ "image/gif" // Register GIF decoding with image.Decode.
+	"image/color"
+	"image/gif" // Register GIF decoding and provide GIF encoding.
 	"image/jpeg"
 	"image/png"
 	"io"
+
+	"golang.org/x/image/draw"
 )
 
 // decodeImage decodes an image from an io.Reader.
@@ -26,8 +29,20 @@ func encodeImage(w io.Writer, img image.Image, format Format) error {
 	case FormatPNG:
 		return png.Encode(w, img)
 	case FormatGIF:
-		return fmt.Errorf("GIF encoding is unsupported because palette quantization is not implemented")
+		return encodeGIF(w, img)
 	default:
 		return fmt.Errorf("unsupported image format for encoding: %s", format.String())
 	}
+}
+
+func encodeGIF(w io.Writer, img image.Image) error {
+	bounds := img.Bounds()
+	if bounds.Dx() > 65535 || bounds.Dy() > 65535 {
+		return fmt.Errorf("GIF dimensions exceed 65535 pixels")
+	}
+
+	opaque := image.NewRGBA(bounds)
+	draw.Draw(opaque, bounds, image.NewUniform(color.White), image.Point{}, draw.Src)
+	draw.Draw(opaque, bounds, img, bounds.Min, draw.Over)
+	return gif.Encode(w, opaque, nil)
 }

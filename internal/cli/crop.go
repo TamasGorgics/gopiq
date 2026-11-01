@@ -15,7 +15,7 @@ Flags:
   --y int           source y coordinate
   --width int       crop width (required, positive)
   --height int      crop height (required, positive)
-  --format string   output format: jpeg or png
+  --format string   output format: jpeg, png, or gif
 
 Format is inferred from the output extension when omitted.
 Use "-" for standard input or standard output.

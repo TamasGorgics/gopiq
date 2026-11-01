@@ -6,8 +6,8 @@ import (
 	"github.com/TamasGorgics/gopiq/internal/engine"
 )
 
-// ImageFormat represents a recognized image format. GIF is decode-only;
-// JPEG and PNG are supported for both decoding and encoding.
+// ImageFormat represents a recognized image format. JPEG, PNG, and GIF are
+// supported; GIF output uses the documented lossy palette policy.
 type ImageFormat int
 
 // Supported image formats.
@@ -15,7 +15,7 @@ const (
 	FormatUnknown ImageFormat = iota
 	FormatJPEG
 	FormatPNG
-	FormatGIF // Can be decoded, but GIF encoding is not supported.
+	FormatGIF // GIF output uses a lossy standard-library palette policy.
 )
 
 // String returns the string representation of the ImageFormat.

@@ -8,7 +8,7 @@ Convert an image to grayscale using the BT.709 luma calculation.
 
 Flags:
   --fast            use the parallel GrayscaleFast path
-  --format string   output format: jpeg or png
+  --format string   output format: jpeg, png, or gif
 
 Format is inferred from the output extension when omitted.
 Use "-" for standard input or standard output.

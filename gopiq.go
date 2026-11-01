@@ -80,8 +80,9 @@ func FromBytes(data []byte) *ImageProcessor {
 }
 
 // ToBytes converts the current processed image to a byte slice in the specified format.
-// It supports FormatJPEG and FormatPNG; FormatGIF is decode-only. Returns an error if
-// encoding fails or if a previous error in the chain exists.
+// It supports FormatJPEG, FormatPNG, and FormatGIF. GIF encoding is lossy and
+// uses the documented standard-library palette policy. Returns an error if encoding
+// fails or if a previous error in the chain exists.
 // This method is safe for concurrent use.
 func (p *ImageProcessor) ToBytes(format ImageFormat) ([]byte, error) {
 	core := p.processor()
@@ -92,9 +93,10 @@ func (p *ImageProcessor) ToBytes(format ImageFormat) ([]byte, error) {
 }
 
 // ToWriter encodes the current image directly to w in the specified format.
-// It supports FormatJPEG and FormatPNG; FormatGIF is decode-only. The writer
-// is not closed. A write failure may leave partially written output; use
-// ToBytes if an in-memory result is required.
+// It supports FormatJPEG, FormatPNG, and FormatGIF. GIF encoding is lossy and
+// uses the documented standard-library palette policy. The writer is not closed.
+// A write failure may leave partially written output; use ToBytes if an
+// in-memory result is required.
 // This method is safe for concurrent use.
 func (p *ImageProcessor) ToWriter(w io.Writer, format ImageFormat) error {
 	core := p.processor()
@@ -169,6 +171,82 @@ func (p *ImageProcessor) Crop(x, y, width, height int) *ImageProcessor {
 func (p *ImageProcessor) Resize(width, height int) *ImageProcessor {
 	if core := p.processor(); core != nil {
 		core.Resize(width, height)
+	}
+	return p
+}
+
+// ResizeFit scales a non-empty image to fit inside the requested dimensions
+// while preserving its aspect ratio. The result may be smaller than the target
+// box in one dimension; output bounds start at (0, 0). Empty images and invalid
+// dimensions set a chain error. Upscaling is allowed.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) ResizeFit(width, height int) *ImageProcessor {
+	if core := p.processor(); core != nil {
+		core.ResizeFit(width, height)
+	}
+	return p
+}
+
+// ResizeFill scales a non-empty image to cover the requested dimensions while
+// preserving its aspect ratio, then center-crops to exactly width×height.
+// Output bounds start at (0, 0). Empty images and invalid dimensions set a chain
+// error. Upscaling is allowed.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) ResizeFill(width, height int) *ImageProcessor {
+	if core := p.processor(); core != nil {
+		core.ResizeFill(width, height)
+	}
+	return p
+}
+
+// FlipHorizontal mirrors the image left-to-right. Output starts at (0, 0) for
+// non-empty images; empty images are left unchanged.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) FlipHorizontal() *ImageProcessor {
+	if core := p.processor(); core != nil {
+		core.FlipHorizontal()
+	}
+	return p
+}
+
+// FlipVertical mirrors the image top-to-bottom. Output starts at (0, 0) for
+// non-empty images; empty images are left unchanged.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) FlipVertical() *ImageProcessor {
+	if core := p.processor(); core != nil {
+		core.FlipVertical()
+	}
+	return p
+}
+
+// Rotate90 rotates the image clockwise by 90 degrees. Width and height are
+// swapped and output starts at (0, 0) for non-empty images; empty images are
+// left unchanged.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) Rotate90() *ImageProcessor {
+	if core := p.processor(); core != nil {
+		core.Rotate90()
+	}
+	return p
+}
+
+// Rotate180 rotates the image by 180 degrees. Output starts at (0, 0) for
+// non-empty images; empty images are left unchanged.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) Rotate180() *ImageProcessor {
+	if core := p.processor(); core != nil {
+		core.Rotate180()
+	}
+	return p
+}
+
+// Rotate270 rotates the image clockwise by 270 degrees. Width and height are
+// swapped and output starts at (0, 0) for non-empty images; empty images are
+// left unchanged.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) Rotate270() *ImageProcessor {
+	if core := p.processor(); core != nil {
+		core.Rotate270()
 	}
 	return p
 }

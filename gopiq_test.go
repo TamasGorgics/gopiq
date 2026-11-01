@@ -127,10 +127,16 @@ func TestToBytes(t *testing.T) {
 		t.Errorf("Failed to decode PNG bytes produced by ToBytes: %v", err)
 	}
 
-	// Test case: Unsupported format (e.g., GIF)
-	_, err = proc.ToBytes(FormatGIF) // GIF encoding is not supported in stdlib without color quantization
-	if err == nil {
-		t.Fatal("ToBytes() with unsupported format (GIF) should return an error")
+	// Test case: GIF encoding
+	gifData, err := proc.ToBytes(FormatGIF)
+	if err != nil {
+		t.Fatalf("ToBytes(FormatGIF) failed: %v", err)
+	}
+	if len(gifData) == 0 {
+		t.Fatal("ToBytes(FormatGIF) returned empty bytes")
+	}
+	if _, format, err := image.Decode(bytes.NewReader(gifData)); err != nil || format != "gif" {
+		t.Fatalf("GIF output = format %q, error %v", format, err)
 	}
 
 	// Test case: Processor with a prior error
@@ -462,7 +468,7 @@ func TestImageAndErrMethods(t *testing.T) {
 func TestEncodeImage(t *testing.T) {
 	testImg := createTestImage(20, 20)
 
-	for _, format := range []ImageFormat{FormatJPEG, FormatPNG} {
+	for _, format := range []ImageFormat{FormatJPEG, FormatPNG, FormatGIF} {
 		data, err := New(testImg).ToBytes(format)
 		if err != nil {
 			t.Fatalf("ToBytes(%s) failed: %v", format, err)
@@ -470,10 +476,6 @@ func TestEncodeImage(t *testing.T) {
 		if len(data) == 0 {
 			t.Fatalf("ToBytes(%s) returned empty bytes", format)
 		}
-	}
-
-	if _, err := New(testImg).ToBytes(FormatGIF); err == nil {
-		t.Fatal("ToBytes(FormatGIF) should return an error")
 	}
 }
 

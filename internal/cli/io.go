@@ -11,16 +11,9 @@ import (
 	"github.com/TamasGorgics/gopiq"
 )
 
-// G304 is intentional: the CLI reads caller-supplied input paths.
-
-var errGIFOutput = errors.New("GIF output is not supported because palette quantization is not implemented")
-
 func process(e *env, input, output, formatValue string, apply func(*gopiq.ImageProcessor), usage string) error {
 	format, err := resolveOutputFormat(output, formatValue)
 	if err != nil {
-		if errors.Is(err, errGIFOutput) {
-			return err
-		}
 		return &usageError{err: err, usage: usage}
 	}
 
@@ -99,9 +92,6 @@ func resolveOutputFormat(output, formatValue string) (gopiq.ImageFormat, error) 
 		if format == gopiq.FormatUnknown {
 			return gopiq.FormatUnknown, fmt.Errorf("unknown output format %q", formatValue)
 		}
-		if format == gopiq.FormatGIF {
-			return gopiq.FormatUnknown, errGIFOutput
-		}
 		return format, nil
 	}
 
@@ -113,9 +103,6 @@ func resolveOutputFormat(output, formatValue string) (gopiq.ImageFormat, error) 
 	format := gopiq.FormatFromString(extension)
 	if format == gopiq.FormatUnknown {
 		return gopiq.FormatUnknown, fmt.Errorf("cannot infer output format from %q; use --format", output)
-	}
-	if format == gopiq.FormatGIF {
-		return gopiq.FormatUnknown, errGIFOutput
 	}
 	return format, nil
 }

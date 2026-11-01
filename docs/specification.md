@@ -44,6 +44,8 @@ The initial audit found the following gaps. M0–M4 have resolved all listed ite
 - **IMG-3:** Operations must support valid images whose bounds do not start at `(0, 0)`, including subimages. Pixel loops must use coordinates or offsets appropriate to the image's actual bounds and stride.
 - **IMG-4:** Operations on empty bounds must have documented behavior and must not panic. Grayscale operations on an empty image are a no-op that preserves its bounds. Crop, resize, and text-watermark operations on an empty image report a chain error because they cannot produce a valid result.
 - **IMG-5:** Processing operations must not mutate the source image in place.
+- **IMG-6:** `ResizeFit(width, height)` must preserve aspect ratio, fit entirely within the positive target box, allow upscaling, clamp rounded dimensions to at least `1`, and produce zero-origin bounds. `ResizeFill(width, height)` must preserve aspect ratio, cover the target box, center-crop with floor division for odd differences, and produce exact zero-origin target bounds. Empty sources and invalid target dimensions must return chain errors.
+- **IMG-7:** `FlipHorizontal`, `FlipVertical`, `Rotate90`, `Rotate180`, and `Rotate270` must preserve pixels and alpha, leave sources unchanged, and produce zero-origin output for non-empty images. Rotations are clockwise; 90/270 swap dimensions. Empty images are no-ops that preserve bounds.
 
 ### 3.3 Grayscale and performance options
 
@@ -65,7 +67,7 @@ The initial audit found the following gaps. M0–M4 have resolved all listed ite
 
 - **FMT-1:** JPEG and PNG decoding and encoding remain supported and covered by round-trip tests.
 - **FMT-2:** GIF decoding is supported independently of whether the importing application imports `image/gif`; the library registers the decoder itself.
-- **FMT-3:** GIF encoding remains unsupported until a palette-quantization policy is selected. Calls to encode GIF must return a clear error, not imply successful support.
+- **FMT-3:** GIF encoding must use the Go standard-library encoder policy: a Plan 9 256-color palette, Floyd–Steinberg dithering, alpha flattened over white, and a single frame. Images exceeding GIF's 65,535-pixel dimension limit must return a clear error.
 - **FMT-4:** `FormatFromString`, `ImageFormat.String`, and format comments must agree with the formats actually accepted for decoding and encoding.
 
 ### 3.6 Error handling and size safety
@@ -100,22 +102,22 @@ If independent pixel storage is later needed, it should be provided by an explic
 
 - **CLI-1:** The module must provide a `cmd/gopiq` main package that builds with `go build ./cmd/gopiq` and installs with `go install github.com/TamasGorgics/gopiq/cmd/gopiq@latest`. Command parsing and execution logic must live in a testable internal package rather than in `main`.
 - **CLI-2:** The CLI must provide documented `convert`, `resize`, `crop`, `grayscale`, and `watermark` commands, plus help and version output. Required arguments, optional flags, and operation semantics must match the public library API.
-- **CLI-3:** The CLI must read input from a file or standard input and write output to a file or standard output. Output format is inferred from the destination extension when possible and may be overridden with `--format`. JPEG, PNG, and GIF input are supported; JPEG and PNG output are supported; GIF output must return a clear unsupported error.
+- **CLI-3:** The CLI must read input from a file or standard input and write output to a file or standard output. Output format is inferred from the destination extension when possible and may be overridden with `--format`. JPEG, PNG, and GIF input and output are supported; GIF output uses the policy in FMT-3.
 - **CLI-4:** Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.
-- **CLI-5:** The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, unsupported GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.
+- **CLI-5:** The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.
 
 ## 4. Extensions
 
-The following extensions were implemented in M6 and are documented in [Streaming and Decode Limits](streaming.md):
+The following extensions were implemented in M6–M7:
 
 - **EXT-1 — Streaming I/O:** Implemented through `FromReader` and `ToWriter`; existing byte APIs remain supported.
 - **EXT-2 — Decode limits:** Implemented through `DecodeLimits`, with encoded-size and dimension validation.
+- **EXT-3 — Aspect-ratio operations:** Implemented through `ResizeFit` and `ResizeFill`; see IMG-6.
+- **EXT-4 — Additional operations:** Flips and 90-degree rotations implemented; image watermarks remain planned.
+- **EXT-5 — Additional formats:** Single-frame GIF output implemented with the FMT-3 policy; other formats remain planned.
 
 The following extensions remain planned; they are not prerequisites for the correctness milestones above and should be scoped separately.
 
-- **EXT-3 — Aspect-ratio operations:** Add explicit fit/fill or proportional-resize APIs with documented rounding, cropping, and upscaling behavior.
-- **EXT-4 — Additional operations:** Consider rotation, flips, and image watermarks with clear bounds, anchor, and alpha-compositing behavior.
-- **EXT-5 — Additional formats:** Consider GIF encoding only with an explicit quantization policy; assess additional formats and dependencies independently.
 - **EXT-6 — Bounded batch processing:** Consider a worker-pool API with bounded concurrency, ordering guarantees, and cancellation behavior for batch workloads.
 - **EXT-7 — Benchmark-led optimization:** Profile representative workloads before adding pooling, fixed-point arithmetic, SIMD, or other specialized paths. Keep a simple correct fallback.
 - **EXT-8 — Expanded assurance:** Add fuzzing for malformed image data and options, broader platform/version CI, and automated checks that documentation examples stay compilable.

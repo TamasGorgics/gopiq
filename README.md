@@ -12,9 +12,10 @@ A fluent, thread-safe Go image processing library with chainable operations.
 
 - **Fluent Interface**: Chain multiple operations together naturally
 - **Thread-Safe**: Individually synchronized methods; multi-call chains are not atomic
-- **High-Quality Processing**: Uses Catmull-Rom interpolation for resizing
+- **High-Quality Processing**: Catmull-Rom resizing plus exact, fit, and fill modes
+- **Transformations**: Cropping, horizontal/vertical flips, and 90/180/270-degree rotation
 - **Comprehensive Error Handling**: Errors propagate through the chain
-- **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
+- **Multiple Format Support**: JPEG, PNG, and GIF input/output; GIF output uses a documented lossy palette policy
 - **Text Watermarks**: Add customizable text overlays with font control
 - **Streaming I/O and Decode Limits**: Decode from readers, encode to writers, and bound untrusted input
 - **Standalone CLI**: Use the same operations from the command line
@@ -157,12 +158,16 @@ func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
 - `ToWriter(w io.Writer, format ImageFormat) error` - Encode directly to a writer
 - `Err() error` - Get any error from the processing chain
 
-`FromBytes` decodes JPEG, PNG, and GIF. `FromReader` and `FromBytesWithLimits` support `DecodeLimits` and `ErrDecodeLimit`; see [Streaming and Decode Limits](docs/streaming.md). `ToBytes` and `ToWriter` encode JPEG and PNG; GIF encoding is not supported. `Clone` does not deep-copy pixels, and images passed to `New` or returned by `Image` must not be mutated while processors or clones are in use.
+`FromBytes` decodes JPEG, PNG, and GIF. `FromReader` and `FromBytesWithLimits` support `DecodeLimits` and `ErrDecodeLimit`; see [Streaming and Decode Limits](docs/streaming.md). `ToBytes` and `ToWriter` encode JPEG, PNG, and GIF; GIF output uses the documented lossy palette policy. `Clone` does not deep-copy pixels, and images passed to `New` or returned by `Image` must not be mutated while processors or clones are in use.
 
 ### Processing Operations
 
-- `Resize(width, height int)` - Resize using Catmull-Rom interpolation
+- `Resize(width, height int)` - Resize to exact dimensions using Catmull-Rom interpolation
+- `ResizeFit(width, height int)` - Preserve aspect ratio and fit inside the target box
+- `ResizeFill(width, height int)` - Preserve aspect ratio, cover, and center-crop to exact dimensions
 - `Crop(x, y, width, height int)` - Crop to specified rectangle
+- `FlipHorizontal()` / `FlipVertical()` - Mirror the image
+- `Rotate90()` / `Rotate180()` / `Rotate270()` - Rotate clockwise
 - `Grayscale()` - Convert to grayscale
 - `AddTextWatermark(text, ...options)` - Add text watermark
 

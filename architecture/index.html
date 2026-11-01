@@ -264,6 +264,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../cli/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CLI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../performance/" class="md-tabs__link">
         
   
@@ -577,6 +596,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../performance/" class="md-nav__link">
         
   
@@ -713,10 +759,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#planned-cli" class="md-nav__link">
+  <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Planned CLI
+        CLI
       
     </span>
   </a>
@@ -834,10 +880,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#planned-cli" class="md-nav__link">
+  <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Planned CLI
+        CLI
       
     </span>
   </a>
@@ -862,27 +908,34 @@
 
 
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
-<p>The module has one public package and one implementation package:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>github.com/TamasGorgics/gopiq          # public API
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>github.com/TamasGorgics/gopiq/internal/engine
+<p>The module has one public package, an implementation engine, and an internal CLI layer:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>github.com/TamasGorgics/gopiq                 # public API
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>github.com/TamasGorgics/gopiq/internal/engine # image implementation
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>github.com/TamasGorgics/gopiq/internal/cli    # CLI command logic
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>github.com/TamasGorgics/gopiq/cmd/gopiq       # CLI entry point
 </code></pre></div>
-<p>The root package owns the exported API: <code>ImageProcessor</code>, formats, performance options, and watermark options. The engine owns image state, synchronization, decoding/encoding, and image processing. Engine types are intentionally not used in public function signatures.</p>
+<p>The root package owns the exported API: <code>ImageProcessor</code>, formats, performance options, and watermark options. The engine owns image state, synchronization, decoding/encoding, and image processing. Engine types are intentionally not used in public function signatures. The CLI layer translates command-line input into calls to the public root API.</p>
 <h2 id="dependency-direction">Dependency direction<a class="headerlink" href="#dependency-direction" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The root package may import <code>internal/engine</code>.</li>
 <li><code>internal/engine</code> must not import the root package.</li>
 <li>Examples import only the root package.</li>
-<li>A future <code>cmd/gopiq</code> CLI must import only the root package. It may use <code>internal/cli</code> for command logic, but not <code>internal/engine</code>.</li>
+<li><code>cmd/gopiq</code> imports <code>internal/cli</code>; <code>internal/cli</code> imports only the root package, not <code>internal/engine</code>.</li>
 </ul>
 <p>The <code>internal</code> directory prevents external modules from importing the engine. Packages inside this module can still import it, so the dependency rule is enforced by review and can later be checked with a linter.</p>
 <h2 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Root-package tests exercise behavior through the facade, and <code>api_test.go</code> compiles against the public package as an external consumer.</li>
 <li><code>internal/engine</code> tests cover implementation details such as checked arithmetic, worker counts, fixed-point conversion, and decoding/encoding helpers.</li>
-<li>The coverage command includes both the root package and the engine.</li>
+<li><code>internal/cli</code> tests cover commands, flags, format inference, standard streams, failures, and output writes.</li>
+<li>The coverage command includes the root package, the engine, and the CLI layer.</li>
 </ul>
-<h2 id="planned-cli">Planned CLI<a class="headerlink" href="#planned-cli" title="Permanent link">&para;</a></h2>
-<p>The CLI will live under <code>cmd/gopiq</code>, with testable command logic under <code>internal/cli</code>. It will use <code>FromBytes</code>, the chainable operations, and <code>ToBytes</code> from the public package. This keeps the CLI a consumer of the same API that external applications use.</p>
+<h2 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h2>
+<p>The standalone command is split into a thin entry point and testable command logic:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cmd/gopiq/main.go       # os.Exit(cli.Main(...))
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>internal/cli/            # command parsing, I/O, and execution
+</code></pre></div>
+<p><code>internal/cli</code> uses <code>FromBytes</code>, the chainable operations, and <code>ToBytes</code> from the public root package. It must not import <code>internal/engine</code> directly. This keeps the CLI a consumer of the same API that external applications use.</p>
 
 
 

@@ -41,6 +41,7 @@ nav:
     - 'Core Methods': 'api/core.md'
     - 'Processing Operations': 'api/operations.md'
     - 'Watermark Options': 'api/watermark.md'
+  - 'CLI': 'cli.md'
   - 'Performance': 'performance.md'
   - 'Concurrency': 'concurrency.md'
   - 'Architecture': 'architecture.md'

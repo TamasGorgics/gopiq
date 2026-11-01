@@ -719,6 +719,7 @@
 <li><code>AddTextWatermark(text, ...options)</code> - Add text watermark; an empty destination image returns a chain error.</li>
 </ul>
 <p>Crop and resize reject invalid dimensions. Cropping uses absolute coordinates from the source image bounds and returns a chain error for empty bounds. Resizing an image with empty bounds also returns a chain error.</p>
+<p>All operations treat their source image as read-only. When they succeed on non-empty input, they create a new destination image. Do not mutate an image passed to <code>New</code> or returned by <code>Image</code> while the processor or its clones may be used concurrently.</p>
 
 
 

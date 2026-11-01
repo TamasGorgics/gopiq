@@ -712,13 +712,14 @@
 <h1 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
 <p>This section covers the core methods for creating and managing <code>ImageProcessor</code> instances.</p>
 <ul>
-<li><code>New(img image.Image) *ImageProcessor</code> - Create processor from image</li>
+<li><code>New(img image.Image) *ImageProcessor</code> - Create processor from image; the image is retained, not copied</li>
 <li><code>FromBytes(data []byte) *ImageProcessor</code> - Decode JPEG, PNG, or GIF bytes into a processor</li>
-<li><code>Clone() *ImageProcessor</code> - Create independent copy</li>
-<li><code>Image() (image.Image, error)</code> - Get current image</li>
+<li><code>Clone() *ImageProcessor</code> - Create a shallow processor copy; error and performance state are copied, image storage is shared</li>
+<li><code>Image() (image.Image, error)</code> - Get the current image for reading</li>
 <li><code>ToBytes(format ImageFormat) ([]byte, error)</code> - Export to bytes</li>
 <li><code>Err() error</code> - Get any error from the processing chain</li>
 </ul>
+<p>Methods are individually synchronized, but a multi-call chain is not atomic. Images passed to <code>New</code> and images returned by <code>Image</code> must be treated as read-only while the processor or its clones may be used concurrently. <code>Clone</code> does not deep-copy pixels.</p>
 <p><code>ToBytes</code> supports JPEG and PNG output. GIF is decode-only; attempting to encode GIF returns an error.</p>
 
 

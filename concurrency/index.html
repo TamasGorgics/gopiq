@@ -645,10 +645,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#safe-concurrent-reading" class="md-nav__link">
+  <a href="#chains-are-not-atomic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Safe Concurrent Reading
+        Chains are not atomic
       
     </span>
   </a>
@@ -656,10 +656,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#clone-for-independent-processing" class="md-nav__link">
+  <a href="#read-only-images" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Clone for Independent Processing
+        Read-only images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clone-is-shallow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clone is shallow
       
     </span>
   </a>
@@ -670,7 +681,7 @@
   <a href="#concurrent-processing-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Concurrent Processing Pattern
+        Concurrent processing pattern
       
     </span>
   </a>
@@ -766,10 +777,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#safe-concurrent-reading" class="md-nav__link">
+  <a href="#chains-are-not-atomic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Safe Concurrent Reading
+        Chains are not atomic
       
     </span>
   </a>
@@ -777,10 +788,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#clone-for-independent-processing" class="md-nav__link">
+  <a href="#read-only-images" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Clone for Independent Processing
+        Read-only images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clone-is-shallow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clone is shallow
       
     </span>
   </a>
@@ -791,7 +813,7 @@
   <a href="#concurrent-processing-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Concurrent Processing Pattern
+        Concurrent processing pattern
       
     </span>
   </a>
@@ -816,55 +838,63 @@
 
 
 <h1 id="concurrency">Concurrency<a class="headerlink" href="#concurrency" title="Permanent link">&para;</a></h1>
-<p><strong>gopiq</strong> is designed to be thread-safe and supports concurrent usage out of the box.</p>
-<h3 id="safe-concurrent-reading">Safe Concurrent Reading<a class="headerlink" href="#safe-concurrent-reading" title="Permanent link">&para;</a></h3>
-<p>Multiple goroutines can safely read from the same processor instance. The library uses <code>sync.RWMutex</code> to ensure that read operations do not conflict with write operations.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nx">proc</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">image</span><span class="p">).</span><span class="nx">Resize</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span><span class="w"> </span><span class="mi">600</span><span class="p">).</span><span class="nx">Grayscale</span><span class="p">()</span>
+<p><strong>gopiq</strong> synchronizes individual method calls. <code>Image</code>, <code>Err</code>, <code>ToBytes</code>, and <code>Clone</code> take read locks; processing methods and <code>SetPerformanceOptions</code> take write locks. The processor state and its image reference can therefore be accessed safely from multiple goroutines.</p>
+<h2 id="chains-are-not-atomic">Chains are not atomic<a class="headerlink" href="#chains-are-not-atomic" title="Permanent link">&para;</a></h2>
+<p>A multi-call chain is not an atomic transaction. Another goroutine may interleave between calls in a chain, so the image seen by the next call is not guaranteed to be the result of the previous call in your goroutine. Use separate processors or an external mutex when an entire sequence must be atomic.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nx">proc</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">image</span><span class="p">)</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1">// Multiple goroutines can safely call these concurrently:</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nx">img</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">proc</span><span class="p">.</span><span class="nx">Image</span><span class="p">()</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="c1">// Use img...</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">}()</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="nx">bytes</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">proc</span><span class="p">.</span><span class="nx">ToBytes</span><span class="p">(</span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">FormatPNG</span><span class="p">)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="c1">// Use bytes...</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">}()</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1">// Another goroutine may run between these calls; this is not one atomic step.</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nx">proc</span><span class="p">.</span><span class="nx">Resize</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span><span class="w"> </span><span class="mi">600</span><span class="p">).</span><span class="nx">Crop</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">).</span><span class="nx">Grayscale</span><span class="p">()</span>
 </code></pre></div>
-<h3 id="clone-for-independent-processing">Clone for Independent Processing<a class="headerlink" href="#clone-for-independent-processing" title="Permanent link">&para;</a></h3>
-<p>For parallel <em>write</em> operations, you should create independent copies of the processor. The <code>Clone()</code> method creates a shallow copy of the processor that is safe to use in a separate goroutine.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nx">original</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">image</span><span class="p">)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">// Each goroutine gets its own independent processor</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">for</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">        </span><span class="nx">processor</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">original</span><span class="p">.</span><span class="nx">Clone</span><span class="p">().</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">            </span><span class="nx">Resize</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">).</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">            </span><span class="nx">AddTextWatermark</span><span class="p">(</span><span class="s">"Processed"</span><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">        </span><span class="c1">// Process independently...</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p">}()</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+<h2 id="read-only-images">Read-only images<a class="headerlink" href="#read-only-images" title="Permanent link">&para;</a></h2>
+<p><code>New</code> retains the image passed to it. <code>Image()</code> returns the processor's current image. Treat both as read-only while the processor or any clone may be used concurrently.</p>
+<p>Processing operations do not modify their source in place; for non-empty images they create a new destination image. This is what allows clones to process a shared source independently. Mutating an image through a concrete-type assertion is outside the thread-safety guarantee.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nx">source</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">image</span><span class="p">.</span><span class="nx">NewRGBA</span><span class="p">(</span><span class="nx">image</span><span class="p">.</span><span class="nx">Rect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">800</span><span class="p">,</span><span class="w"> </span><span class="mi">600</span><span class="p">))</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nx">proc</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">source</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">// Do not call source.Set while proc or its clones are in use.</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">proc</span><span class="p">.</span><span class="nx">Resize</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">).</span><span class="nx">Image</span><span class="p">()</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="c1">// Handle the error.</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">// Any image obtained from Image is read-only too.</span>
 </code></pre></div>
-<h3 id="concurrent-processing-pattern">Concurrent Processing Pattern<a class="headerlink" href="#concurrent-processing-pattern" title="Permanent link">&para;</a></h3>
-<p>Here is a common pattern for processing multiple images in parallel.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">func</span><span class="w"> </span><span class="nx">processImagesInParallel</span><span class="p">(</span><span class="nx">images</span><span class="w"> </span><span class="p">[]</span><span class="nx">image</span><span class="p">.</span><span class="nx">Image</span><span class="p">)</span><span class="w"> </span><span class="p">[]</span><span class="o">*</span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">ImageProcessor</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="nx">results</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">make</span><span class="p">([]</span><span class="o">*</span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">ImageProcessor</span><span class="p">,</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">images</span><span class="p">))</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">wg</span><span class="w"> </span><span class="nx">sync</span><span class="p">.</span><span class="nx">WaitGroup</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">i</span><span class="p">,</span><span class="w"> </span><span class="nx">img</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">images</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="nx">wg</span><span class="p">.</span><span class="nx">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">        </span><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">index</span><span class="w"> </span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="nx">image</span><span class="w"> </span><span class="nx">image</span><span class="p">.</span><span class="nx">Image</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">            </span><span class="k">defer</span><span class="w"> </span><span class="nx">wg</span><span class="p">.</span><span class="nx">Done</span><span class="p">()</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">            </span><span class="nx">results</span><span class="p">[</span><span class="nx">index</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">image</span><span class="p">).</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">                </span><span class="nx">Resize</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">).</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">                </span><span class="nx">Grayscale</span><span class="p">()</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">        </span><span class="p">}(</span><span class="nx">i</span><span class="p">,</span><span class="w"> </span><span class="nx">img</span><span class="p">)</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="nx">wg</span><span class="p">.</span><span class="nx">Wait</span><span class="p">()</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">results</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="p">}</span>
+<h2 id="clone-is-shallow">Clone is shallow<a class="headerlink" href="#clone-is-shallow" title="Permanent link">&para;</a></h2>
+<p><code>Clone</code> creates a shallow copy of the processor. It copies the current error and performance options, but shares the current image reference and its pixel storage with the original. Clones have independent processor state and can be used from separate goroutines as long as the shared source image is not mutated.</p>
+<p><code>Clone</code> does not deep-copy pixels. If you need independent pixel storage, copy the image before constructing processors.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nx">original</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">image</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kd">var</span><span class="w"> </span><span class="nx">wg</span><span class="w"> </span><span class="nx">sync</span><span class="p">.</span><span class="nx">WaitGroup</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">for</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nx">wg</span><span class="p">.</span><span class="nx">Go</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="nx">processor</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">original</span><span class="p">.</span><span class="nx">Clone</span><span class="p">().</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">            </span><span class="nx">Resize</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">).</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">            </span><span class="nx">AddTextWatermark</span><span class="p">(</span><span class="s">"Processed"</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">        </span><span class="c1">// processor has independent state; its starting image is the shared source.</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">processor</span><span class="p">.</span><span class="nx">Err</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">            </span><span class="c1">// Handle the processing error.</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="p">})</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="p">}</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nx">wg</span><span class="p">.</span><span class="nx">Wait</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="concurrent-processing-pattern">Concurrent processing pattern<a class="headerlink" href="#concurrent-processing-pattern" title="Permanent link">&para;</a></h2>
+<p>For independent images, create a processor per image. If several processors branch from one base image, use shallow clones and keep the shared source read-only.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">func</span><span class="w"> </span><span class="nx">processImagesInParallel</span><span class="p">(</span><span class="nx">images</span><span class="w"> </span><span class="p">[]</span><span class="nx">image</span><span class="p">.</span><span class="nx">Image</span><span class="p">)</span><span class="w"> </span><span class="p">[]</span><span class="o">*</span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">ImageProcessor</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="nx">results</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">make</span><span class="p">([]</span><span class="o">*</span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">ImageProcessor</span><span class="p">,</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">images</span><span class="p">))</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">wg</span><span class="w"> </span><span class="nx">sync</span><span class="p">.</span><span class="nx">WaitGroup</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">index</span><span class="p">,</span><span class="w"> </span><span class="nx">img</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">images</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">        </span><span class="nx">wg</span><span class="p">.</span><span class="nx">Go</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">            </span><span class="nx">results</span><span class="p">[</span><span class="nx">index</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">gopiq</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">img</span><span class="p">).</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">                </span><span class="nx">Resize</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">).</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">                </span><span class="nx">Grayscale</span><span class="p">()</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">        </span><span class="p">})</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="nx">wg</span><span class="p">.</span><span class="nx">Wait</span><span class="p">()</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">results</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="p">}</span>
 </code></pre></div>
 
 

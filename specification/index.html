@@ -1061,13 +1061,13 @@
 </ul>
 <p>The Go 1.27.0 minimum is part of this specification. The CI matrix checks that minimum and the latest supported Go 1.27 patch release.</p>
 <h2 id="2-audit-baseline-and-resolution-status">2. Audit baseline and resolution status<a class="headerlink" href="#2-audit-baseline-and-resolution-status" title="Permanent link">&para;</a></h2>
-<p>The initial audit found the following gaps. M0–M2 have resolved the first four listed items; the rest remain assigned to later milestones.</p>
+<p>The initial audit found the following gaps. M0–M3 have resolved the first five listed items; the remaining two are assigned to M4.</p>
 <ul>
 <li><strong>Resolved in M0:</strong> Standalone examples previously redeclared <code>main</code> in one package, breaking <code>go build ./...</code> and <code>go test ./...</code>; they now build independently.</li>
 <li><strong>Resolved in M1:</strong> Parallel grayscale previously mishandled non-zero-origin bounds, and empty images or unsafe dimensions could reach invalid operations.</li>
 <li><strong>Resolved in M2:</strong> <code>WithFontPath</code> previously had no effect; font-source ordering and option validation are now implemented.</li>
 <li><strong>Resolved in M2:</strong> GIF was described as decodable but its decoder was not registered by the library.</li>
-<li><strong>Open for M3:</strong> <code>Clone</code> is described as a deep copy in Go documentation but shares the image pointer; tests and concurrency docs expect shallow sharing.</li>
+<li><strong>Resolved in M3:</strong> <code>Clone</code> is now documented and tested as a shallow copy, and the concurrency contract covers per-call synchronization, non-atomic chains, and read-only images.</li>
 <li><strong>Open for M4:</strong> The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims the implementation does not substantiate.</li>
 <li><strong>Open for M4:</strong> <code>TestPerformanceComparison</code> performs timing work as a regular test despite having no performance assertion.</li>
 </ul>

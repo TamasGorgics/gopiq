@@ -4,7 +4,6 @@
 [![codecov](https://codecov.io/gh/TamasGorgics/gopiq/branch/main/graph/badge.svg)](https://codecov.io/gh/TamasGorgics/gopiq)
 [![Go Version](https://img.shields.io/badge/Go-1.27-blue.svg)](https://golang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Report Card](https://goreportcard.com/badge/github.com/TamasGorgics/gopiq)](https://goreportcard.com/report/github.com/TamasGorgics/gopiq)
 [![GoDoc](https://godoc.org/github.com/TamasGorgics/gopiq?status.svg)](https://godoc.org/github.com/TamasGorgics/gopiq)
 
 A fluent, thread-safe Go image processing library with chainable operations.

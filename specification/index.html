@@ -1246,6 +1246,8 @@
 <li><strong>IMG-3:</strong> Operations must support valid images whose bounds do not start at <code>(0, 0)</code>, including subimages. Pixel loops must use coordinates or offsets appropriate to the image's actual bounds and stride.</li>
 <li><strong>IMG-4:</strong> Operations on empty bounds must have documented behavior and must not panic. Grayscale operations on an empty image are a no-op that preserves its bounds. Crop, resize, and text-watermark operations on an empty image report a chain error because they cannot produce a valid result.</li>
 <li><strong>IMG-5:</strong> Processing operations must not mutate the source image in place.</li>
+<li><strong>IMG-6:</strong> <code>ResizeFit(width, height)</code> must preserve aspect ratio, fit entirely within the positive target box, allow upscaling, clamp rounded dimensions to at least <code>1</code>, and produce zero-origin bounds. <code>ResizeFill(width, height)</code> must preserve aspect ratio, cover the target box, center-crop with floor division for odd differences, and produce exact zero-origin target bounds. Empty sources and invalid target dimensions must return chain errors.</li>
+<li><strong>IMG-7:</strong> <code>FlipHorizontal</code>, <code>FlipVertical</code>, <code>Rotate90</code>, <code>Rotate180</code>, and <code>Rotate270</code> must preserve pixels and alpha, leave sources unchanged, and produce zero-origin output for non-empty images. Rotations are clockwise; 90/270 swap dimensions. Empty images are no-ops that preserve bounds.</li>
 </ul>
 <h3 id="33-grayscale-and-performance-options">3.3 Grayscale and performance options<a class="headerlink" href="#33-grayscale-and-performance-options" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1267,7 +1269,7 @@
 <ul>
 <li><strong>FMT-1:</strong> JPEG and PNG decoding and encoding remain supported and covered by round-trip tests.</li>
 <li><strong>FMT-2:</strong> GIF decoding is supported independently of whether the importing application imports <code>image/gif</code>; the library registers the decoder itself.</li>
-<li><strong>FMT-3:</strong> GIF encoding remains unsupported until a palette-quantization policy is selected. Calls to encode GIF must return a clear error, not imply successful support.</li>
+<li><strong>FMT-3:</strong> GIF encoding must use the Go standard-library encoder policy: a Plan 9 256-color palette, Floyd–Steinberg dithering, alpha flattened over white, and a single frame. Images exceeding GIF's 65,535-pixel dimension limit must return a clear error.</li>
 <li><strong>FMT-4:</strong> <code>FormatFromString</code>, <code>ImageFormat.String</code>, and format comments must agree with the formats actually accepted for decoding and encoding.</li>
 </ul>
 <h3 id="36-error-handling-and-size-safety">3.6 Error handling and size safety<a class="headerlink" href="#36-error-handling-and-size-safety" title="Permanent link">&para;</a></h3>
@@ -1300,21 +1302,21 @@
 <ul>
 <li><strong>CLI-1:</strong> The module must provide a <code>cmd/gopiq</code> main package that builds with <code>go build ./cmd/gopiq</code> and installs with <code>go install github.com/TamasGorgics/gopiq/cmd/gopiq@latest</code>. Command parsing and execution logic must live in a testable internal package rather than in <code>main</code>.</li>
 <li><strong>CLI-2:</strong> The CLI must provide documented <code>convert</code>, <code>resize</code>, <code>crop</code>, <code>grayscale</code>, and <code>watermark</code> commands, plus help and version output. Required arguments, optional flags, and operation semantics must match the public library API.</li>
-<li><strong>CLI-3:</strong> The CLI must read input from a file or standard input and write output to a file or standard output. Output format is inferred from the destination extension when possible and may be overridden with <code>--format</code>. JPEG, PNG, and GIF input are supported; JPEG and PNG output are supported; GIF output must return a clear unsupported error.</li>
+<li><strong>CLI-3:</strong> The CLI must read input from a file or standard input and write output to a file or standard output. Output format is inferred from the destination extension when possible and may be overridden with <code>--format</code>. JPEG, PNG, and GIF input and output are supported; GIF output uses the policy in FMT-3.</li>
 <li><strong>CLI-4:</strong> Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.</li>
-<li><strong>CLI-5:</strong> The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, unsupported GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.</li>
+<li><strong>CLI-5:</strong> The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.</li>
 </ul>
 <h2 id="4-extensions">4. Extensions<a class="headerlink" href="#4-extensions" title="Permanent link">&para;</a></h2>
-<p>The following extensions were implemented in M6 and are documented in <a href="../streaming/">Streaming and Decode Limits</a>:</p>
+<p>The following extensions were implemented in M6–M7:</p>
 <ul>
 <li><strong>EXT-1 — Streaming I/O:</strong> Implemented through <code>FromReader</code> and <code>ToWriter</code>; existing byte APIs remain supported.</li>
 <li><strong>EXT-2 — Decode limits:</strong> Implemented through <code>DecodeLimits</code>, with encoded-size and dimension validation.</li>
+<li><strong>EXT-3 — Aspect-ratio operations:</strong> Implemented through <code>ResizeFit</code> and <code>ResizeFill</code>; see IMG-6.</li>
+<li><strong>EXT-4 — Additional operations:</strong> Flips and 90-degree rotations implemented; image watermarks remain planned.</li>
+<li><strong>EXT-5 — Additional formats:</strong> Single-frame GIF output implemented with the FMT-3 policy; other formats remain planned.</li>
 </ul>
 <p>The following extensions remain planned; they are not prerequisites for the correctness milestones above and should be scoped separately.</p>
 <ul>
-<li><strong>EXT-3 — Aspect-ratio operations:</strong> Add explicit fit/fill or proportional-resize APIs with documented rounding, cropping, and upscaling behavior.</li>
-<li><strong>EXT-4 — Additional operations:</strong> Consider rotation, flips, and image watermarks with clear bounds, anchor, and alpha-compositing behavior.</li>
-<li><strong>EXT-5 — Additional formats:</strong> Consider GIF encoding only with an explicit quantization policy; assess additional formats and dependencies independently.</li>
 <li><strong>EXT-6 — Bounded batch processing:</strong> Consider a worker-pool API with bounded concurrency, ordering guarantees, and cancellation behavior for batch workloads.</li>
 <li><strong>EXT-7 — Benchmark-led optimization:</strong> Profile representative workloads before adding pooling, fixed-point arithmetic, SIMD, or other specialized paths. Keep a simple correct fallback.</li>
 <li><strong>EXT-8 — Expanded assurance:</strong> Add fuzzing for malformed image data and options, broader platform/version CI, and automated checks that documentation examples stay compilable.</li>

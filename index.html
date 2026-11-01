@@ -962,9 +962,10 @@
 <ul>
 <li><strong>Fluent Interface</strong>: Chain multiple operations together naturally</li>
 <li><strong>Thread-Safe</strong>: Individually synchronized methods; multi-call chains are not atomic</li>
-<li><strong>High-Quality Processing</strong>: Uses Catmull-Rom interpolation for resizing</li>
+<li><strong>High-Quality Processing</strong>: Catmull-Rom resizing plus exact, fit, and fill modes</li>
+<li><strong>Transformations</strong>: Cropping, horizontal/vertical flips, and 90/180/270-degree rotation</li>
 <li><strong>Comprehensive Error Handling</strong>: Errors propagate through the chain</li>
-<li><strong>Multiple Format Support</strong>: JPEG and PNG input/output; GIF input (decode-only)</li>
+<li><strong>Multiple Format Support</strong>: JPEG, PNG, and GIF input/output; GIF output uses a documented lossy palette policy</li>
 <li><strong>Text Watermarks</strong>: Add customizable text overlays with font control</li>
 <li><strong>Streaming I/O and Decode Limits</strong>: Decode from readers, encode to writers, and bound untrusted input</li>
 <li><strong>Standalone CLI</strong>: Run common operations without writing Go code</li>

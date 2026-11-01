@@ -862,7 +862,7 @@
 <li><code>Err() error</code> - Get any error from the processing chain</li>
 </ul>
 <p>Methods are individually synchronized, but a multi-call chain is not atomic. Images passed to <code>New</code> and images returned by <code>Image</code> must be treated as read-only while the processor or its clones may be used concurrently. <code>Clone</code> does not deep-copy pixels.</p>
-<p><code>ToBytes</code> and <code>ToWriter</code> support JPEG and PNG output. GIF is decode-only; attempting to encode GIF returns an error.</p>
+<p><code>ToBytes</code> and <code>ToWriter</code> support JPEG, PNG, and GIF output. GIF output uses the Go standard-library Plan 9 palette, Floyd–Steinberg dithering, white alpha flattening, and a single frame.</p>
 <p>See <a href="../../streaming/">Streaming and Decode Limits</a> for <code>DecodeLimits</code>, <code>DefaultDecodeLimits</code>, <code>ErrDecodeLimit</code>, ownership, and writer error behavior.</p>
 
 

@@ -1056,7 +1056,7 @@
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">}</span>
 </code></pre></div>
 <p><code>ToWriter</code> writes directly to the supplied writer and does not close it. It does not buffer the complete encoded image. A write failure may leave partially written output; use <code>ToBytes</code> when an in-memory result is required.</p>
-<p><code>ToWriter</code> supports JPEG and PNG output. GIF encoding remains unsupported because palette quantization is not implemented.</p>
+<p><code>ToWriter</code> supports JPEG, PNG, and GIF output. GIF output uses the Go standard-library Plan 9 256-color palette with Floyd–Steinberg dithering, flattens alpha over white, and writes a single frame.</p>
 <h2 id="ownership-and-resources">Ownership and resources<a class="headerlink" href="#ownership-and-resources" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>FromReader</code> consumes but does not close its reader.</li>

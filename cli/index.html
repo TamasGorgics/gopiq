@@ -1233,10 +1233,10 @@
 <h2 id="input-and-output-formats">Input and output formats<a class="headerlink" href="#input-and-output-formats" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Input format is detected from the image content. JPEG, PNG, and GIF are supported.</li>
-<li>Output format is inferred from <code>.jpg</code>, <code>.jpeg</code>, or <code>.png</code>.</li>
-<li><code>--format jpeg|png</code> overrides the output extension.</li>
+<li>Output format is inferred from <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, or <code>.gif</code>.</li>
+<li><code>--format jpeg|png|gif</code> overrides the output extension.</li>
 <li>When output is <code>-</code>, <code>--format</code> is required.</li>
-<li>GIF output is unsupported because palette quantization is not implemented. GIF input is supported.</li>
+<li>GIF output uses the Go standard-library encoder: Plan 9 256-color palette, Floyd–Steinberg dithering, white alpha flattening, and a single frame.</li>
 </ul>
 <p>Examples:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>cat<span class="w"> </span>photo.jpg<span class="w"> </span><span class="p">|</span><span class="w"> </span>gopiq<span class="w"> </span>grayscale<span class="w"> </span>--format<span class="w"> </span>png<span class="w"> </span>-<span class="w"> </span>-<span class="w"> </span>&gt;<span class="w"> </span>gray.png
@@ -1271,9 +1271,9 @@
 <ul>
 <li>One operation per invocation; use standard pipelines for multiple steps.</li>
 <li>No aspect-ratio resize fit/fill.</li>
-<li>No GIF output.</li>
 <li>No batch or directory processing.</li>
 <li>No streaming decode limits; the CLI reads the complete input before processing.</li>
+<li>GIF output is lossy and single-frame.</li>
 </ul>
 
 

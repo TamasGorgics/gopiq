@@ -850,13 +850,20 @@
 <h1 id="processing-operations">Processing Operations<a class="headerlink" href="#processing-operations" title="Permanent link">&para;</a></h1>
 <p>These methods are chainable and perform image manipulation.</p>
 <ul>
-<li><code>Resize(width, height int)</code> - Resize a non-empty image using Catmull-Rom interpolation; invalid or unrepresentable sizes set a chain error.</li>
+<li><code>Resize(width, height int)</code> - Resize a non-empty image to exact dimensions using Catmull-Rom interpolation.</li>
+<li><code>ResizeFit(width, height int)</code> - Preserve aspect ratio and fit within the target box; upscaling is allowed.</li>
+<li><code>ResizeFill(width, height int)</code> - Preserve aspect ratio, cover the target box, and center-crop to exact dimensions.</li>
 <li><code>Crop(x, y, width, height int)</code> - Crop using source-image coordinates; the result has zero-origin bounds.</li>
+<li><code>FlipHorizontal()</code> - Mirror left-to-right.</li>
+<li><code>FlipVertical()</code> - Mirror top-to-bottom.</li>
+<li><code>Rotate90()</code> - Rotate clockwise 90 degrees.</li>
+<li><code>Rotate180()</code> - Rotate 180 degrees.</li>
+<li><code>Rotate270()</code> - Rotate clockwise 270 degrees.</li>
 <li><code>Grayscale()</code> - Convert to grayscale; empty images are left unchanged.</li>
 <li><code>GrayscaleFast()</code> - Convert to grayscale using parallel processing when enabled and above the configured threshold; empty images are left unchanged.</li>
 <li><code>AddTextWatermark(text, ...options)</code> - Add text watermark; an empty destination image returns a chain error.</li>
 </ul>
-<p>Crop and resize reject invalid dimensions. Cropping uses absolute coordinates from the source image bounds and returns a chain error for empty bounds. Resizing an image with empty bounds also returns a chain error.</p>
+<p>Resize operations reject non-positive target dimensions and empty sources. <code>ResizeFit</code> rounds to the nearest fitting dimensions and clamps to at least one pixel; <code>ResizeFill</code> center-crops with floor division for odd differences. Flips and rotations produce zero-origin output for non-empty images, preserve alpha, and leave empty images unchanged.</p>
 <p>All operations treat their source image as read-only. When they succeed on non-empty input, they create a new destination image. Do not mutate an image passed to <code>New</code> or returned by <code>Image</code> while the processor or its clones may be used concurrently.</p>
 
 

@@ -1166,7 +1166,7 @@
 <ul>
 <li>Implement <code>WithFontPath</code> and deterministic font-source option ordering.</li>
 <li>Validate nil/invalid watermark options and calculate all positions relative to image bounds.</li>
-<li>Register GIF decoding in the library and retain an explicit error for unsupported GIF encoding.</li>
+<li>Register GIF decoding in the library; GIF encoding was added later in M7 with an explicit policy.</li>
 <li>Add tests for font files, option errors, anchor positions, non-zero bounds, and JPEG/PNG/GIF behavior.</li>
 </ul>
 <p><strong>Exit criteria:</strong> Every advertised option has observable behavior or is removed; format conversion and errors match the specification.</p>
@@ -1208,11 +1208,11 @@
 </ul>
 <p><strong>Exit criteria:</strong> Streaming callers avoid mandatory full encoded-buffer copies, and configured decode limits are enforced by tests including oversized and malformed inputs.</p>
 <h3 id="m7-expand-transformation-and-format-capabilities">M7 — Expand transformation and format capabilities<a class="headerlink" href="#m7-expand-transformation-and-format-capabilities" title="Permanent link">&para;</a></h3>
-<p><strong>Priority:</strong> P2 · <strong>Requirements:</strong> EXT-3–EXT-5</p>
+<p><strong>Status:</strong> Complete · <strong>Priority:</strong> P2 · <strong>Requirements:</strong> EXT-3–EXT-5</p>
 <ul>
-<li>Specify proportional resize fit/fill behavior, including rounding, crop, and upscaling rules.</li>
-<li>Evaluate rotation, flips, and image watermarks with bounds and alpha-compositing semantics.</li>
-<li>Assess additional formats independently; implement GIF output only after choosing and documenting palette quantization.</li>
+<li>Implement proportional resize fit/fill behavior, including rounding, crop, and upscaling rules.</li>
+<li>Implement flips and 90-degree rotations; evaluate image watermarks for a later milestone with a separate alpha/ownership contract.</li>
+<li>Implement single-frame GIF output with a documented standard-library palette policy; assess other formats independently.</li>
 </ul>
 <p><strong>Exit criteria:</strong> Each selected feature has a written API contract, pixel-level tests, and documentation before implementation is considered complete.</p>
 <h3 id="m8-optimize-measured-workloads-and-support-bounded-batches">M8 — Optimize measured workloads and support bounded batches<a class="headerlink" href="#m8-optimize-measured-workloads-and-support-bounded-batches" title="Permanent link">&para;</a></h3>

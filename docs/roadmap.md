@@ -40,7 +40,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M3 — Resolve clone and concurrency semantics
 
-**Priority:** P1 · **Requirements:** CON-1–CON-5
+**Status:** Complete · **Priority:** P1 · **Requirements:** CON-1–CON-5
 
 - Make Go docs, README, tests, and concurrency docs consistently describe `Clone` as shallow.
 - Document that input and returned images are read-only during concurrent processing.

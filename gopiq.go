@@ -20,9 +20,13 @@ import (
 
 // ImageProcessor holds the current state of the image being processed
 // and any error that occurred during a chainable operation.
-// It is safe for concurrent use by multiple goroutines.
+//
+// Methods are individually safe for concurrent use, but a multi-call chain is
+// not atomic: calls from other goroutines may interleave between chained
+// methods. Images passed to constructors and returned by Image are read-only
+// while the processor or its clones may be used concurrently.
 type ImageProcessor struct {
-	mu           sync.RWMutex // Protects currentImage and err from concurrent access
+	mu           sync.RWMutex // Protects currentImage, err, and perfOpts
 	currentImage image.Image
 	err          error // Stores the first error in a chain
 	perfOpts     PerformanceOptions
@@ -246,7 +250,9 @@ func returnPooledRGBA(img *image.RGBA) {
 	}
 }
 
-// New creates a new ImageProcessor from an existing image.Image.
+// New creates a new ImageProcessor from an existing image.Image. The processor
+// retains the supplied image rather than copying it; callers must treat it as
+// read-only while the processor or its clones are in use.
 // Returns an error if the provided image is nil.
 func New(img image.Image) *ImageProcessor {
 	if img == nil {
@@ -259,6 +265,8 @@ func New(img image.Image) *ImageProcessor {
 }
 
 // NewWithPerformanceOptions creates a new ImageProcessor with custom performance settings.
+// The processor retains the supplied image rather than copying it; callers must treat it as
+// read-only while the processor or its clones are in use.
 func NewWithPerformanceOptions(img image.Image, opts PerformanceOptions) *ImageProcessor {
 	if img == nil {
 		return &ImageProcessor{err: fmt.Errorf("initial image cannot be nil")}
@@ -270,6 +278,7 @@ func NewWithPerformanceOptions(img image.Image, opts PerformanceOptions) *ImageP
 }
 
 // SetPerformanceOptions updates the performance settings for this processor.
+// This method is safe for concurrent use.
 func (ip *ImageProcessor) SetPerformanceOptions(opts PerformanceOptions) *ImageProcessor {
 	ip.mu.Lock()
 	defer ip.mu.Unlock()
@@ -318,6 +327,10 @@ func (ip *ImageProcessor) ToBytes(format ImageFormat) ([]byte, error) {
 }
 
 // Image returns the current image.Image and any error encountered in the processing chain.
+// The returned image must be treated as read-only. It may share storage with the image
+// passed to New and with images held by clones; callers must not mutate it while the
+// processor or its clones are in use. Mutating an image through a concrete-type
+// assertion is outside the thread-safety guarantee.
 // This method is safe for concurrent use.
 func (ip *ImageProcessor) Image() (image.Image, error) {
 	ip.mu.RLock()
@@ -333,9 +346,15 @@ func (ip *ImageProcessor) Err() error {
 	return ip.err
 }
 
-// Clone creates a deep copy of the ImageProcessor that can be safely used
-// in a different goroutine. The returned processor shares no mutable state
-// with the original.
+// Clone creates a shallow copy of the ImageProcessor. It copies the current
+// error and performance options but shares the current image reference, and
+// therefore its pixel storage, with the original.
+//
+// The returned processor has an independent mutex and can be used from another
+// goroutine when the shared image is treated as read-only. Processing methods
+// do not modify their input; for non-empty images they create a new destination.
+// To obtain independent pixels, copy the image before constructing a processor;
+// Clone does not deep-copy image data.
 func (ip *ImageProcessor) Clone() *ImageProcessor {
 	ip.mu.RLock()
 	defer ip.mu.RUnlock()

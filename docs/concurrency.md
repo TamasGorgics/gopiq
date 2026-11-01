@@ -1,61 +1,78 @@
 # Concurrency
 
-**gopiq** is designed to be thread-safe and supports concurrent usage out of the box.
+**gopiq** synchronizes individual method calls. `Image`, `Err`, `ToBytes`, and `Clone` take read locks; processing methods and `SetPerformanceOptions` take write locks. The processor state and its image reference can therefore be accessed safely from multiple goroutines.
 
-### Safe Concurrent Reading
-Multiple goroutines can safely read from the same processor instance. The library uses `sync.RWMutex` to ensure that read operations do not conflict with write operations.
+## Chains are not atomic
+
+A multi-call chain is not an atomic transaction. Another goroutine may interleave between calls in a chain, so the image seen by the next call is not guaranteed to be the result of the previous call in your goroutine. Use separate processors or an external mutex when an entire sequence must be atomic.
 
 ```go
-proc := gopiq.New(image).Resize(800, 600).Grayscale()
+proc := gopiq.New(image)
 
-// Multiple goroutines can safely call these concurrently:
-go func() {
-    img, err := proc.Image()
-    // Use img...
-}()
-
-go func() {
-    bytes, err := proc.ToBytes(gopiq.FormatPNG)
-    // Use bytes...
-}()
+// Another goroutine may run between these calls; this is not one atomic step.
+proc.Resize(800, 600).Crop(10, 10, 200, 200).Grayscale()
 ```
 
-### Clone for Independent Processing
-For parallel *write* operations, you should create independent copies of the processor. The `Clone()` method creates a shallow copy of the processor that is safe to use in a separate goroutine.
+## Read-only images
+
+`New` retains the image passed to it. `Image()` returns the processor's current image. Treat both as read-only while the processor or any clone may be used concurrently.
+
+Processing operations do not modify their source in place; for non-empty images they create a new destination image. This is what allows clones to process a shared source independently. Mutating an image through a concrete-type assertion is outside the thread-safety guarantee.
+
+```go
+source := image.NewRGBA(image.Rect(0, 0, 800, 600))
+proc := gopiq.New(source)
+
+// Do not call source.Set while proc or its clones are in use.
+_, err := proc.Resize(400, 300).Image()
+if err != nil {
+    // Handle the error.
+}
+// Any image obtained from Image is read-only too.
+```
+
+## Clone is shallow
+
+`Clone` creates a shallow copy of the processor. It copies the current error and performance options, but shares the current image reference and its pixel storage with the original. Clones have independent processor state and can be used from separate goroutines as long as the shared source image is not mutated.
+
+`Clone` does not deep-copy pixels. If you need independent pixel storage, copy the image before constructing processors.
 
 ```go
 original := gopiq.New(image)
+var wg sync.WaitGroup
 
-// Each goroutine gets its own independent processor
-for i := 0; i < 10; i++ {
-    go func() {
+for range 10 {
+    wg.Go(func() {
         processor := original.Clone().
             Resize(100, 100).
             AddTextWatermark("Processed")
-        // Process independently...
-    }()
+        // processor has independent state; its starting image is the shared source.
+        if processor.Err() != nil {
+            // Handle the processing error.
+        }
+    })
 }
+wg.Wait()
 ```
 
-### Concurrent Processing Pattern
-Here is a common pattern for processing multiple images in parallel.
+## Concurrent processing pattern
+
+For independent images, create a processor per image. If several processors branch from one base image, use shallow clones and keep the shared source read-only.
 
 ```go
 func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
     results := make([]*gopiq.ImageProcessor, len(images))
     var wg sync.WaitGroup
-    
-    for i, img := range images {
-        wg.Add(1)
-        go func(index int, image image.Image) {
-            defer wg.Done()
-            results[index] = gopiq.New(image).
+
+    for index, img := range images {
+        wg.Go(func() {
+            results[index] = gopiq.New(img).
                 Resize(200, 200).
                 Grayscale()
-        }(i, img)
+        })
     }
-    
+
     wg.Wait()
     return results
 }
-``` 
+```

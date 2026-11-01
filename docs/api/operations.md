@@ -9,3 +9,5 @@ These methods are chainable and perform image manipulation.
 - `AddTextWatermark(text, ...options)` - Add text watermark; an empty destination image returns a chain error.
 
 Crop and resize reject invalid dimensions. Cropping uses absolute coordinates from the source image bounds and returns a chain error for empty bounds. Resizing an image with empty bounds also returns a chain error.
+
+All operations treat their source image as read-only. When they succeed on non-empty input, they create a new destination image. Do not mutate an image passed to `New` or returned by `Image` while the processor or its clones may be used concurrently.

@@ -12,7 +12,7 @@ A fluent, thread-safe Go image processing library with chainable operations.
 ## Features
 
 - **Fluent Interface**: Chain multiple operations together naturally
-- **Thread-Safe**: Safe for concurrent use by multiple goroutines
+- **Thread-Safe**: Individually synchronized methods; multi-call chains are not atomic
 - **High-Quality Processing**: Uses Catmull-Rom interpolation for resizing
 - **Comprehensive Error Handling**: Errors propagate through the chain
 - **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)

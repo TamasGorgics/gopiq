@@ -12,7 +12,7 @@ A fluent, thread-safe Go image processing library with chainable operations.
 ## Features
 
 - **Fluent Interface**: Chain multiple operations together naturally
-- **Thread-Safe**: Safe for concurrent use by multiple goroutines
+- **Thread-Safe**: Individually synchronized methods; multi-call chains are not atomic
 - **High-Quality Processing**: Uses Catmull-Rom interpolation for resizing
 - **Comprehensive Error Handling**: Errors propagate through the chain
 - **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
@@ -76,41 +76,32 @@ func main() {
 
 ## Thread Safety
 
-**gopiq** is designed to be thread-safe and supports concurrent usage:
+**gopiq** synchronizes individual method calls. `Image`, `Err`, `ToBytes`, and `Clone` take read locks; processing methods and `SetPerformanceOptions` take write locks.
 
-### Safe Concurrent Reading
-Multiple goroutines can safely read from the same processor:
+A multi-call chain is not atomic. Another goroutine can interleave between calls in a chain, so use separate processors or external synchronization when an entire sequence must be atomic.
 
-```go
-proc := gopiq.New(image).Resize(800, 600).Grayscale()
+### Read-only images
+`New` retains the image you pass in, and `Image()` returns the current image. Treat both as read-only while the processor or any clone may be used concurrently. Processing operations do not modify their source; for non-empty images they create a new destination. Mutating an image through a concrete-type assertion is outside the thread-safety guarantee.
 
-// Multiple goroutines can safely call these concurrently:
-go func() {
-    img, err := proc.Image()
-    // Use img...
-}()
-
-go func() {
-    bytes, err := proc.ToBytes(gopiq.FormatPNG)
-    // Use bytes...
-}()
-```
-
-### Clone for Independent Processing
-Create independent copies for separate goroutine processing:
+### Clone shares image storage
+`Clone` creates a shallow copy: error and performance-option state are copied, while the current image reference and pixel storage are shared. Clones have independent processor state and can process the shared source concurrently as long as the source image itself is not mutated. `Clone` does not deep-copy pixels; copy the image before constructing processors if independent pixel storage is required.
 
 ```go
 original := gopiq.New(image)
+var wg sync.WaitGroup
 
-// Each goroutine gets its own independent processor
-for i := 0; i < 10; i++ {
-    go func() {
+for range 10 {
+    wg.Go(func() {
         processor := original.Clone().
             Resize(100, 100).
             AddTextWatermark("Processed")
-        // Process independently...
-    }()
+        // processor starts from original's shared read-only image.
+        if err := processor.Err(); err != nil {
+            // Handle the processing error.
+        }
+    })
 }
+wg.Wait()
 ```
 
 ### Concurrent Processing Pattern
@@ -118,17 +109,15 @@ for i := 0; i < 10; i++ {
 func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
     results := make([]*gopiq.ImageProcessor, len(images))
     var wg sync.WaitGroup
-    
-    for i, img := range images {
-        wg.Add(1)
-        go func(index int, image image.Image) {
-            defer wg.Done()
-            results[index] = gopiq.New(image).
+
+    for index, img := range images {
+        wg.Go(func() {
+            results[index] = gopiq.New(img).
                 Resize(200, 200).
                 Grayscale()
-        }(i, img)
+        })
     }
-    
+
     wg.Wait()
     return results
 }
@@ -138,14 +127,14 @@ func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
 
 ### Core Methods
 
-- `New(img image.Image) *ImageProcessor` - Create processor from image
+- `New(img image.Image) *ImageProcessor` - Create a processor that retains `img` as read-only
 - `FromBytes(data []byte) *ImageProcessor` - Create processor from image bytes
-- `Clone() *ImageProcessor` - Create independent copy
-- `Image() (image.Image, error)` - Get current image
+- `Clone() *ImageProcessor` - Create a shallow processor copy; image storage is shared
+- `Image() (image.Image, error)` - Get the current image for reading
 - `ToBytes(format ImageFormat) ([]byte, error)` - Export to bytes
 - `Err() error` - Get any error from the processing chain
 
-`FromBytes` decodes JPEG, PNG, and GIF. `ToBytes` encodes JPEG and PNG; GIF encoding is not supported.
+`FromBytes` decodes JPEG, PNG, and GIF. `ToBytes` encodes JPEG and PNG; GIF encoding is not supported. `Clone` does not deep-copy pixels, and images passed to `New` or returned by `Image` must not be mutated while processors or clones are in use.
 
 ### Processing Operations
 
@@ -167,8 +156,8 @@ If both font-source options are provided, the last one wins. With neither option
 
 ## Performance Notes
 
-- Each operation creates a new image copy (safe but memory-intensive)
-- Use `Clone()` for concurrent processing of the same base image
+- For non-empty images, each operation creates a new destination image and leaves its source unchanged (memory-intensive)
+- Use `Clone()` to branch processor state; clones share the read-only source image
 - Consider image size limits for memory-constrained environments
 - Catmull-Rom resizing provides high quality but is computationally intensive
 

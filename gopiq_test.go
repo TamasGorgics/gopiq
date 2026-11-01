@@ -8,7 +8,6 @@ import (
 	"image/png"
 	"sync"
 	"testing"
-	"time"
 )
 
 // Helper function to create a simple test image (RGBA)
@@ -515,33 +514,86 @@ func TestNewRGBA(t *testing.T) {
 
 func TestClone(t *testing.T) {
 	originalImg := createTestImage(100, 100)
-	proc := New(originalImg)
-
-	// Apply some transformations to the original
-	proc.Resize(50, 50).Grayscale()
-
-	// Clone the processor
+	opts := PerformanceOptions{
+		MaxGoroutines:            3,
+		EnableParallelProcessing: false,
+		MinSizeForParallel:       7,
+	}
+	proc := NewWithPerformanceOptions(originalImg, opts)
 	cloned := proc.Clone()
 
-	// Verify the clone has the same state
+	// Clone is shallow: processor state is copied, image storage is shared.
 	originalImage, originalErr := proc.Image()
 	clonedImage, clonedErr := cloned.Image()
-
 	if originalErr != clonedErr {
 		t.Errorf("Clone error mismatch: original=%v, cloned=%v", originalErr, clonedErr)
 	}
-
-	if originalImage != clonedImage {
-		t.Error("Clone should have the same image reference")
+	if originalImage != clonedImage || clonedImage != originalImg {
+		t.Error("Clone should share the original image reference")
+	}
+	if cloned.perfOpts != opts {
+		t.Errorf("Clone performance options = %+v, want %+v", cloned.perfOpts, opts)
 	}
 
-	// Verify they are independent - modify original
-	proc.Crop(10, 10, 20, 20)
-
-	// Clone should be unchanged
+	// Changing the original branch must not replace the clone's shared snapshot.
+	proc.Resize(50, 50).Grayscale()
+	if err := proc.Err(); err != nil {
+		t.Fatalf("original branch failed: %v", err)
+	}
 	clonedImageAfter, _ := cloned.Image()
-	if clonedImageAfter != clonedImage {
-		t.Error("Clone was affected by changes to original")
+	if clonedImageAfter != originalImg {
+		t.Error("Clone was affected by changes to the original")
+	}
+	if cloned.perfOpts != opts {
+		t.Error("Clone performance options changed with the original")
+	}
+
+	// Changing the clone branch must not replace the original's current image.
+	originalBeforeCloneBranch, _ := proc.Image()
+	cloned.Resize(25, 25)
+	if err := cloned.Err(); err != nil {
+		t.Fatalf("clone branch failed: %v", err)
+	}
+	originalAfterCloneBranch, _ := proc.Image()
+	if originalAfterCloneBranch != originalBeforeCloneBranch {
+		t.Error("Original was affected by changes to the clone")
+	}
+	clonedImageAfterResize, _ := cloned.Image()
+	if clonedImageAfterResize == originalImg {
+		t.Error("Clone resize did not create a new destination image")
+	}
+
+	// Performance options have independent state after cloning.
+	cloned.SetPerformanceOptions(PerformanceOptions{
+		MaxGoroutines:            1,
+		EnableParallelProcessing: true,
+		MinSizeForParallel:       0,
+	})
+	if cloned.perfOpts == opts {
+		t.Error("Clone performance options were not updated independently")
+	}
+	if proc.perfOpts != opts {
+		t.Error("Original performance options changed with the clone")
+	}
+
+	// Error state is copied at clone time and then branches independently.
+	errored := New(nil)
+	erroredClone := errored.Clone()
+	if errored.Err() == nil || erroredClone.Err() == nil {
+		t.Fatal("Clone did not preserve the original error state")
+	}
+	if errored.Err().Error() != erroredClone.Err().Error() {
+		t.Errorf("Clone error = %v, want %v", erroredClone.Err(), errored.Err())
+	}
+
+	branch := New(createTestImage(10, 10))
+	branchClone := branch.Clone()
+	branchClone.Resize(0, 0)
+	if branch.Err() != nil {
+		t.Errorf("Original error changed by clone failure: %v", branch.Err())
+	}
+	if branchClone.Err() == nil {
+		t.Error("Clone failure was not recorded on the clone")
 	}
 }
 
@@ -589,13 +641,14 @@ func TestConcurrentRead(t *testing.T) {
 
 func TestConcurrentProcessing(t *testing.T) {
 	originalImg := createTestImage(100, 100)
+	sourceBefore := captureM1Pixels(originalImg)
 
 	const numGoroutines = 5
 	var wg sync.WaitGroup
 
 	results := make([]*ImageProcessor, numGoroutines)
 
-	// Multiple goroutines processing different clones
+	// Multiple goroutines process clones that share the same read-only source.
 	for index := range numGoroutines {
 		wg.Go(func() {
 
@@ -617,6 +670,10 @@ func TestConcurrentProcessing(t *testing.T) {
 	}
 
 	wg.Wait()
+
+	if !sameM1Pixels(sourceBefore, captureM1Pixels(originalImg)) {
+		t.Fatal("Concurrent clone processing modified the shared source image")
+	}
 
 	// Verify all operations completed successfully
 	for i, result := range results {
@@ -678,40 +735,63 @@ func TestConcurrentChaining(t *testing.T) {
 }
 
 func TestRaceConditionDetection(t *testing.T) {
-	// This test is designed to catch race conditions when run with -race flag
-	originalImg := createTestImage(50, 50)
-	proc := New(originalImg)
+	// Readers and writers act on the same processor. Individual calls are
+	// synchronized, but the chains below are intentionally not atomic; the race
+	// detector is the primary assertion.
+	proc := New(createTestImage(64, 64))
 
-	const numGoroutines = 20
+	const numGoroutines = 12
+	const iterations = 20
+	start := make(chan struct{})
 	var wg sync.WaitGroup
 
-	// Mix of read and write operations to stress test the locking
 	for index := range numGoroutines {
 		wg.Go(func() {
-
-			if index%2 == 0 {
-				// Read operations
-				for j := 0; j < 50; j++ {
-					proc.Image()
-					proc.Err()
-					proc.ToBytes(FormatPNG)
-					time.Sleep(time.Microsecond)
-				}
-			} else {
-				// Write operations (on clones to avoid interfering with reads)
-				clone := proc.Clone()
-				for j := 0; j < 20; j++ {
-					clone.Resize(30+j, 30+j)
-					if j%5 == 0 {
-						clone.Grayscale()
+			<-start
+			for range iterations {
+				switch index % 4 {
+				case 0:
+					img, err := proc.Image()
+					if err != nil {
+						t.Errorf("Image failed during concurrent access: %v", err)
+						return
 					}
-					time.Sleep(time.Microsecond)
+					if img == nil {
+						t.Error("Image returned nil during concurrent access")
+						return
+					}
+					if _, err := proc.ToBytes(FormatPNG); err != nil {
+						t.Errorf("ToBytes failed during concurrent access: %v", err)
+						return
+					}
+					_ = proc.Err()
+				case 1:
+					proc.Resize(64, 64).Grayscale()
+				case 2:
+					// Crop to 1x1 is valid for every non-empty intermediate
+					// image, so interleaving cannot turn this into a chain error.
+					proc.Crop(0, 0, 1, 1)
+					proc.AddTextWatermark("race", WithFontSize(10))
+					proc.SetPerformanceOptions(PerformanceOptions{
+						MaxGoroutines:            2,
+						EnableParallelProcessing: true,
+						MinSizeForParallel:       0,
+					})
+					proc.GrayscaleFast()
+				case 3:
+					clone := proc.Clone()
+					clone.Resize(16, 16).Grayscale()
 				}
 			}
 		})
 	}
 
+	close(start)
 	wg.Wait()
+
+	if err := proc.Err(); err != nil {
+		t.Fatalf("concurrent access produced an unexpected chain error: %v", err)
+	}
 }
 
 // --- Performance Optimization Tests ---

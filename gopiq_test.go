@@ -12,7 +12,7 @@ import (
 
 // Helper function to create a simple test image (RGBA)
 func createTestImage(width, height int) image.Image {
-	img := newRGBA(image.Rect(0, 0, width, height))
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	// Fill with a simple pattern for visual distinction
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
@@ -47,8 +47,8 @@ func TestNew(t *testing.T) {
 	if proc.Err() != nil {
 		t.Fatalf("New() with valid image should not return an error, got: %v", proc.Err())
 	}
-	if proc.currentImage == nil {
-		t.Fatal("New() should set currentImage")
+	if proc.testImage() == nil {
+		t.Fatal("New() should set the current image")
 	}
 
 	// Test case: Nil image
@@ -56,8 +56,8 @@ func TestNew(t *testing.T) {
 	if proc.Err() == nil {
 		t.Fatal("New() with nil image should return an error")
 	}
-	if proc.currentImage != nil {
-		t.Fatal("New() with nil image should not set currentImage")
+	if proc.testImage() != nil {
+		t.Fatal("New() with nil image should not set the current image")
 	}
 }
 
@@ -69,11 +69,11 @@ func TestFromBytes(t *testing.T) {
 	if proc.Err() != nil {
 		t.Fatalf("FromBytes() with valid JPEG should not error, got: %v", proc.Err())
 	}
-	if proc.currentImage == nil {
+	if proc.testImage() == nil {
 		t.Fatal("FromBytes() should decode image")
 	}
-	if proc.currentImage.Bounds().Dx() != 100 || proc.currentImage.Bounds().Dy() != 100 {
-		t.Errorf("Decoded image dimensions mismatch, got %v", proc.currentImage.Bounds())
+	if proc.testImage().Bounds().Dx() != 100 || proc.testImage().Bounds().Dy() != 100 {
+		t.Errorf("Decoded image dimensions mismatch, got %v", proc.testImage().Bounds())
 	}
 
 	// Test case: Valid PNG bytes
@@ -109,8 +109,7 @@ func TestToBytes(t *testing.T) {
 		t.Fatal("ToBytes(FormatJPEG) returned empty bytes")
 	}
 	// Try decoding back to verify
-	_, err = decodeImage(bytes.NewReader(jpegData))
-	if err != nil {
+	if err := FromBytes(jpegData).Err(); err != nil {
 		t.Errorf("Failed to decode JPEG bytes produced by ToBytes: %v", err)
 	}
 
@@ -123,8 +122,7 @@ func TestToBytes(t *testing.T) {
 		t.Fatal("ToBytes(FormatPNG) returned empty bytes")
 	}
 	// Try decoding back to verify
-	_, err = decodeImage(bytes.NewReader(pngData))
-	if err != nil {
+	if err := FromBytes(pngData).Err(); err != nil {
 		t.Errorf("Failed to decode PNG bytes produced by ToBytes: %v", err)
 	}
 
@@ -151,12 +149,12 @@ func TestCrop(t *testing.T) {
 	if croppedProc.Err() != nil {
 		t.Fatalf("Crop() with valid dimensions should not error, got: %v", croppedProc.Err())
 	}
-	if croppedProc.currentImage.Bounds().Dx() != 100 || croppedProc.currentImage.Bounds().Dy() != 75 {
-		t.Errorf("Cropped image dimensions mismatch, expected 100x75, got %v", croppedProc.currentImage.Bounds().Size())
+	if croppedProc.testImage().Bounds().Dx() != 100 || croppedProc.testImage().Bounds().Dy() != 75 {
+		t.Errorf("Cropped image dimensions mismatch, expected 100x75, got %v", croppedProc.testImage().Bounds().Size())
 	}
 	// Verify a pixel was moved correctly (e.g., original (50,50) is now (0,0) in cropped)
 	originalPixel := originalImg.At(50, 50)
-	croppedPixel := croppedProc.currentImage.At(0, 0)
+	croppedPixel := croppedProc.testImage().At(0, 0)
 
 	origR, origG, origB, origA := originalPixel.RGBA()
 	cropR, cropG, cropB, cropA := croppedPixel.RGBA()
@@ -211,8 +209,8 @@ func TestResize(t *testing.T) {
 	if resizedProc.Err() != nil {
 		t.Fatalf("Resize() with valid dimensions should not error, got: %v", resizedProc.Err())
 	}
-	if resizedProc.currentImage.Bounds().Dx() != 100 || resizedProc.currentImage.Bounds().Dy() != 75 {
-		t.Errorf("Resized image dimensions mismatch, expected 100x75, got %v", resizedProc.currentImage.Bounds().Size())
+	if resizedProc.testImage().Bounds().Dx() != 100 || resizedProc.testImage().Bounds().Dy() != 75 {
+		t.Errorf("Resized image dimensions mismatch, expected 100x75, got %v", resizedProc.testImage().Bounds().Size())
 	}
 
 	// Test case: Valid resize (upscale)
@@ -221,8 +219,8 @@ func TestResize(t *testing.T) {
 	if resizedProc.Err() != nil {
 		t.Fatalf("Resize() with valid dimensions should not error, got: %v", resizedProc.Err())
 	}
-	if resizedProc.currentImage.Bounds().Dx() != 400 || resizedProc.currentImage.Bounds().Dy() != 300 {
-		t.Errorf("Resized image dimensions mismatch, expected 400x300, got %v", resizedProc.currentImage.Bounds().Size())
+	if resizedProc.testImage().Bounds().Dx() != 400 || resizedProc.testImage().Bounds().Dy() != 300 {
+		t.Errorf("Resized image dimensions mismatch, expected 400x300, got %v", resizedProc.testImage().Bounds().Size())
 	}
 
 	// Test case: Resize with zero width
@@ -260,13 +258,13 @@ func TestGrayscale(t *testing.T) {
 	}
 
 	// Verify dimensions are the same
-	if grayProc.currentImage.Bounds() != originalImg.Bounds() {
-		t.Errorf("Grayscale image dimensions mismatch, expected %v, got %v", originalImg.Bounds(), grayProc.currentImage.Bounds())
+	if grayProc.testImage().Bounds() != originalImg.Bounds() {
+		t.Errorf("Grayscale image dimensions mismatch, expected %v, got %v", originalImg.Bounds(), grayProc.testImage().Bounds())
 	}
 
 	// Verify a pixel is truly grayscale by checking that R=G=B
 	// The grayscale image is stored as RGBA, so we need to extract the RGBA values
-	grayPixelColor := grayProc.currentImage.At(25, 25)
+	grayPixelColor := grayProc.testImage().At(25, 25)
 	r, g, b, _ := grayPixelColor.RGBA()
 
 	// In a grayscale image, R, G, and B should be equal
@@ -279,7 +277,7 @@ func TestGrayscale(t *testing.T) {
 	proc = New(originalImg)
 	grayProc = proc.Grayscale()
 
-	grayPixelColor = grayProc.currentImage.At(10, 10)
+	grayPixelColor = grayProc.testImage().At(10, 10)
 	r, g, b, _ = grayPixelColor.RGBA()
 
 	// In a grayscale image, R, G, and B should be equal
@@ -348,7 +346,7 @@ func TestAddTextWatermark(t *testing.T) {
 
 	// Test case 6: No font specified (clearing default)
 	proc = New(originalImg)
-	watermarkedProc = proc.AddTextWatermark("No Font", func(wc *watermarkConfig) { wc.FontBytes = nil })
+	watermarkedProc = proc.AddTextWatermark("No Font", WithFontBytes(nil))
 	if watermarkedProc.Err() == nil {
 		t.Fatal("AddTextWatermark with no font bytes should error")
 	}
@@ -374,9 +372,9 @@ func TestChainingOperations(t *testing.T) {
 
 	// Verify final dimensions
 	expectedWidth, expectedHeight := 100, 50
-	if finalProc.currentImage.Bounds().Dx() != expectedWidth || finalProc.currentImage.Bounds().Dy() != expectedHeight {
+	if finalProc.testImage().Bounds().Dx() != expectedWidth || finalProc.testImage().Bounds().Dy() != expectedHeight {
 		t.Errorf("Final image dimensions mismatch, expected %dx%d, got %dx%d",
-			expectedWidth, expectedHeight, finalProc.currentImage.Bounds().Dx(), finalProc.currentImage.Bounds().Dy())
+			expectedWidth, expectedHeight, finalProc.testImage().Bounds().Dx(), finalProc.testImage().Bounds().Dy())
 	}
 
 	// Check if the output can be encoded to bytes (implies valid image)
@@ -430,83 +428,21 @@ func TestImageAndErrMethods(t *testing.T) {
 	}
 }
 
-// Test case for DecodeImage in formats.go
-func TestDecodeImage(t *testing.T) {
-	testImg := createTestImage(50, 50)
-	jpegBytes, _ := imageToJPEGBytes(testImg)
-
-	// Valid JPEG decode
-	img, err := decodeImage(bytes.NewReader(jpegBytes))
-	if err != nil {
-		t.Fatalf("decodeImage for JPEG failed: %v", err)
-	}
-	if img == nil {
-		t.Fatal("decodeImage for JPEG returned nil")
-	}
-	if img.Bounds().Dx() != 50 {
-		t.Errorf("Decoded JPEG image has wrong width: %d", img.Bounds().Dx())
-	}
-
-	pngBytes, _ := imageToPNGBytes(testImg)
-	// Valid PNG decode
-	img, err = decodeImage(bytes.NewReader(pngBytes))
-	if err != nil {
-		t.Fatalf("decodeImage for PNG failed: %v", err)
-	}
-	if img == nil {
-		t.Fatal("decodeImage for PNG returned nil")
-	}
-	if img.Bounds().Dy() != 50 {
-		t.Errorf("Decoded PNG image has wrong height: %d", img.Bounds().Dy())
-	}
-
-	// Invalid image data
-	_, err = decodeImage(bytes.NewReader([]byte("not an image")))
-	if err == nil {
-		t.Fatal("decodeImage with invalid data should return error")
-	}
-}
-
-// Test case for encodeImage in formats.go
 func TestEncodeImage(t *testing.T) {
 	testImg := createTestImage(20, 20)
-	var buf bytes.Buffer
 
-	// Valid JPEG encode
-	err := encodeImage(&buf, testImg, FormatJPEG)
-	if err != nil {
-		t.Fatalf("encodeImage for JPEG failed: %v", err)
-	}
-	if buf.Len() == 0 {
-		t.Fatal("encodeImage for JPEG returned empty bytes")
-	}
-
-	buf.Reset() // Clear buffer for next test
-	// Valid PNG encode
-	err = encodeImage(&buf, testImg, FormatPNG)
-	if err != nil {
-		t.Fatalf("encodeImage for PNG failed: %v", err)
-	}
-	if buf.Len() == 0 {
-		t.Fatal("encodeImage for PNG returned empty bytes")
+	for _, format := range []ImageFormat{FormatJPEG, FormatPNG} {
+		data, err := New(testImg).ToBytes(format)
+		if err != nil {
+			t.Fatalf("ToBytes(%s) failed: %v", format, err)
+		}
+		if len(data) == 0 {
+			t.Fatalf("ToBytes(%s) returned empty bytes", format)
+		}
 	}
 
-	buf.Reset()
-	// Unsupported format (GIF encoding is not supported in stdlib without color quantization)
-	err = encodeImage(&buf, testImg, FormatGIF)
-	if err == nil {
-		t.Fatal("encodeImage with unsupported format (GIF) should return error")
-	}
-}
-
-func TestNewRGBA(t *testing.T) {
-	bounds := image.Rect(0, 0, 10, 10)
-	img := newRGBA(bounds)
-	if img == nil {
-		t.Fatal("newRGBA returned nil")
-	}
-	if img.Bounds() != bounds {
-		t.Errorf("newRGBA bounds mismatch, expected %v, got %v", bounds, img.Bounds())
+	if _, err := New(testImg).ToBytes(FormatGIF); err == nil {
+		t.Fatal("ToBytes(FormatGIF) should return an error")
 	}
 }
 
@@ -531,8 +467,8 @@ func TestClone(t *testing.T) {
 	if originalImage != clonedImage || clonedImage != originalImg {
 		t.Error("Clone should share the original image reference")
 	}
-	if cloned.perfOpts != opts {
-		t.Errorf("Clone performance options = %+v, want %+v", cloned.perfOpts, opts)
+	if cloned.testOptions() != opts {
+		t.Errorf("Clone performance options = %+v, want %+v", cloned.testOptions(), opts)
 	}
 
 	// Changing the original branch must not replace the clone's shared snapshot.
@@ -544,7 +480,7 @@ func TestClone(t *testing.T) {
 	if clonedImageAfter != originalImg {
 		t.Error("Clone was affected by changes to the original")
 	}
-	if cloned.perfOpts != opts {
+	if cloned.testOptions() != opts {
 		t.Error("Clone performance options changed with the original")
 	}
 
@@ -569,10 +505,10 @@ func TestClone(t *testing.T) {
 		EnableParallelProcessing: true,
 		MinSizeForParallel:       0,
 	})
-	if cloned.perfOpts == opts {
+	if cloned.testOptions() == opts {
 		t.Error("Clone performance options were not updated independently")
 	}
-	if proc.perfOpts != opts {
+	if proc.testOptions() != opts {
 		t.Error("Original performance options changed with the clone")
 	}
 
@@ -814,13 +750,13 @@ func TestGrayscaleFast(t *testing.T) {
 	}
 
 	// Verify dimensions are the same
-	if grayProc.currentImage.Bounds() != originalImg.Bounds() {
+	if grayProc.testImage().Bounds() != originalImg.Bounds() {
 		t.Errorf("GrayscaleFast image dimensions mismatch, expected %v, got %v",
-			originalImg.Bounds(), grayProc.currentImage.Bounds())
+			originalImg.Bounds(), grayProc.testImage().Bounds())
 	}
 
 	// Verify a pixel is truly grayscale by checking that R=G=B
-	grayPixelColor := grayProc.currentImage.At(50, 50)
+	grayPixelColor := grayProc.testImage().At(50, 50)
 	r, g, b, _ := grayPixelColor.RGBA()
 
 	// In a grayscale image, R, G, and B should be equal

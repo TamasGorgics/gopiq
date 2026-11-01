@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"golang.org/x/image/font/gofont/goregular"
-	"golang.org/x/image/math/fixed"
 )
 
 func TestM2WatermarkFontPathAndSourcePrecedence(t *testing.T) {
@@ -118,7 +117,7 @@ func TestM2WatermarkPositionsAreRelativeToBounds(t *testing.T) {
 			if err := translatedProcessor.Err(); err != nil {
 				t.Fatalf("translated watermark failed: %v", err)
 			}
-			if got, want := translatedProcessor.currentImage.Bounds(), translated.Bounds(); got != want {
+			if got, want := translatedProcessor.testImage().Bounds(), translated.Bounds(); got != want {
 				t.Fatalf("watermarked bounds = %v, want %v", got, want)
 			}
 
@@ -126,8 +125,8 @@ func TestM2WatermarkPositionsAreRelativeToBounds(t *testing.T) {
 			var changedBounds image.Rectangle
 			for y := 0; y < height; y++ {
 				for x := 0; x < width; x++ {
-					zeroColor := zeroProcessor.currentImage.At(x, y)
-					translatedColor := translatedProcessor.currentImage.At(x+translated.Bounds().Min.X, y+translated.Bounds().Min.Y)
+					zeroColor := zeroProcessor.testImage().At(x, y)
+					translatedColor := translatedProcessor.testImage().At(x+translated.Bounds().Min.X, y+translated.Bounds().Min.Y)
 					if !sameM1Color(zeroColor, translatedColor) {
 						t.Fatalf("watermark output differs at relative pixel (%d,%d)", x, y)
 					}
@@ -202,7 +201,7 @@ func TestM2WatermarkNegativeAndFullyClippedOffsets(t *testing.T) {
 	if err := partiallyClipped.Err(); err != nil {
 		t.Fatalf("finite negative offsets should be valid: %v", err)
 	}
-	if partiallyClipped.currentImage == source || sameM1Pixels(captureM1Pixels(source), captureM1Pixels(partiallyClipped.currentImage)) {
+	if partiallyClipped.testImage() == source || sameM1Pixels(captureM1Pixels(source), captureM1Pixels(partiallyClipped.testImage())) {
 		t.Fatal("partially clipped negative offsets did not draw a visible watermark")
 	}
 
@@ -214,7 +213,7 @@ func TestM2WatermarkNegativeAndFullyClippedOffsets(t *testing.T) {
 	if err := fullyClipped.Err(); err != nil {
 		t.Fatalf("finite offsets outside the image should be clipped: %v", err)
 	}
-	if fullyClipped.currentImage != source {
+	if fullyClipped.testImage() != source {
 		t.Fatal("fully clipped watermark should leave the image unchanged")
 	}
 
@@ -226,24 +225,8 @@ func TestM2WatermarkNegativeAndFullyClippedOffsets(t *testing.T) {
 	if err := fullyClippedLeft.Err(); err != nil {
 		t.Fatalf("finite negative offsets outside the image should be clipped: %v", err)
 	}
-	if fullyClippedLeft.currentImage != source {
+	if fullyClippedLeft.testImage() != source {
 		t.Fatal("fully clipped negative offsets should not reposition text")
-	}
-}
-
-func TestM2WatermarkFixedPointCoordinateTranslation(t *testing.T) {
-	const fixedPixelMax = (1 << 25) - 1
-	for _, pixel := range []int{fixedPixelMax + 1, -fixedPixelMax - 2} {
-		dot, shift := watermarkFixedCoordinate(pixel)
-		if dot != 0 || shift != pixel {
-			t.Errorf("watermarkFixedCoordinate(%d) = (%d, %d), want (0, %d)", pixel, dot, shift, pixel)
-		}
-	}
-	for _, pixel := range []int{0, fixedPixelMax, -1 << 25} {
-		dot, shift := watermarkFixedCoordinate(pixel)
-		if want := fixed.I(pixel); dot != want || shift != 0 {
-			t.Errorf("watermarkFixedCoordinate(%d) = (%d, %d), want (%d, 0)", pixel, dot, shift, want)
-		}
 	}
 }
 

@@ -1,13 +1,9 @@
 package gopiq
 
 import (
-	"fmt"
-	"image"
-	_ "image/gif" // Register GIF decoding with image.Decode.
-	"image/jpeg"
-	"image/png"
-	"io"
 	"strings"
+
+	"github.com/TamasGorgics/gopiq/internal/engine"
 )
 
 // ImageFormat represents a recognized image format. GIF is decode-only;
@@ -49,33 +45,15 @@ func FormatFromString(s string) ImageFormat {
 	}
 }
 
-// decodeImage decodes an image from an io.Reader.
-func decodeImage(r io.Reader) (image.Image, error) {
-	img, _, err := image.Decode(r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode image: %w", err)
-	}
-	return img, nil
-}
-
-// encodeImage encodes an image to an io.Writer in the specified format.
-func encodeImage(w io.Writer, img image.Image, format ImageFormat) error {
+func toEngineFormat(format ImageFormat) engine.Format {
 	switch format {
 	case FormatJPEG:
-		return jpeg.Encode(w, img, &jpeg.Options{Quality: 90}) // Default JPEG quality 90
+		return engine.FormatJPEG
 	case FormatPNG:
-		return png.Encode(w, img)
+		return engine.FormatPNG
 	case FormatGIF:
-		// GIF encoding requires image.Paletted. Converting an arbitrary image.Image
-		// to image.Paletted (e.g., quantizing colors) requires external libraries
-		// beyond golang.org/x, or a complex manual implementation of color quantization.
-		return fmt.Errorf("GIF encoding is unsupported because palette quantization is not implemented")
+		return engine.FormatGIF
 	default:
-		return fmt.Errorf("unsupported image format for encoding: %s", format.String())
+		return engine.FormatUnknown
 	}
-}
-
-// newRGBA creates a new RGBA image with the given bounds.
-func newRGBA(bounds image.Rectangle) *image.RGBA {
-	return image.NewRGBA(bounds)
 }

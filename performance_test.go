@@ -31,35 +31,25 @@ func benchmarkGrayscaleSlow(b *testing.B, width, height int) {
 	b.ReportAllocs()
 
 	for b.Loop() {
-		proc := New(img)
-		// Simulate the old slow method using At/Set
-		proc.grayscaleSlowMethod()
-		if proc.Err() != nil {
-			b.Fatal(proc.Err())
-		}
+		// Simulate the old slow method using At/Set.
+		_ = grayscaleSlowImage(img)
 	}
 }
 
-// grayscaleSlowMethod simulates the original slow implementation
-func (ip *ImageProcessor) grayscaleSlowMethod() *ImageProcessor {
-	if ip.err != nil {
-		return ip
-	}
-
-	bounds := ip.currentImage.Bounds()
+// grayscaleSlowImage simulates the original slow implementation.
+func grayscaleSlowImage(img image.Image) *image.RGBA {
+	bounds := img.Bounds()
 	grayImg := image.NewRGBA(bounds)
 
-	// Original slow method using At/Set interface calls
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			originalColor := ip.currentImage.At(x, y)
+			originalColor := img.At(x, y)
 			grayColor := color.GrayModel.Convert(originalColor).(color.Gray)
 			grayImg.Set(x, y, grayColor)
 		}
 	}
 
-	ip.currentImage = grayImg
-	return ip
+	return grayImg
 }
 
 // Benchmark the optimized grayscale implementation
@@ -242,8 +232,7 @@ func TestPerformanceComparison(t *testing.T) {
 
 		// Test slow method
 		start := time.Now()
-		proc1 := New(img)
-		proc1.grayscaleSlowMethod()
+		_ = grayscaleSlowImage(img)
 		slowTime := time.Since(start)
 
 		// Test optimized method

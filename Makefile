@@ -34,7 +34,7 @@ test:
 # Test with coverage commands
 cover:
 	@echo "Running tests with coverage..."
-	@$(GOTEST) -v -race -coverprofile=coverage.out -covermode=atomic ./...
+	@$(GOTEST) -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq,github.com/TamasGorgics/gopiq/internal/engine ./...
 	@echo "To view coverage report, run: make cover-html"
 
 cover-html: cover

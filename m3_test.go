@@ -9,11 +9,11 @@ import (
 
 func TestM3OperationsDoNotMutateSource(t *testing.T) {
 	sourceTypes := []struct {
-		name string
-		new  func(image.Rectangle) draw.Image
+		name   string
+		create func(image.Rectangle) draw.Image
 	}{
-		{name: "rgba", new: func(bounds image.Rectangle) draw.Image { return image.NewRGBA(bounds) }},
-		{name: "nrgba", new: func(bounds image.Rectangle) draw.Image { return image.NewNRGBA(bounds) }},
+		{name: "rgba", create: func(bounds image.Rectangle) draw.Image { return image.NewRGBA(bounds) }},
+		{name: "nrgba", create: func(bounds image.Rectangle) draw.Image { return image.NewNRGBA(bounds) }},
 	}
 	operations := []struct {
 		name  string
@@ -39,7 +39,7 @@ func TestM3OperationsDoNotMutateSource(t *testing.T) {
 	for _, sourceType := range sourceTypes {
 		for _, operation := range operations {
 			t.Run(sourceType.name+"/"+operation.name, func(t *testing.T) {
-				source := sourceType.new(image.Rect(11, -7, 71, 43))
+				source := sourceType.create(image.Rect(11, -7, 71, 43))
 				fillM1Image(source)
 				before := captureM1Pixels(source)
 
@@ -55,7 +55,7 @@ func TestM3OperationsDoNotMutateSource(t *testing.T) {
 				if !sameM1Pixels(before, captureM1Pixels(source)) {
 					t.Fatalf("%s modified its source image", operation.name)
 				}
-				if processor.currentImage == image.Image(source) {
+				if processor.testImage() == image.Image(source) {
 					t.Fatalf("%s reused its source image as the destination", operation.name)
 				}
 			})
@@ -89,10 +89,10 @@ func TestM3CloneBranchesShareReadOnlySource(t *testing.T) {
 	if !sameM1Pixels(before, captureM1Pixels(source)) {
 		t.Fatal("concurrent clone branches modified their shared source image")
 	}
-	if original.currentImage == cloned.currentImage {
+	if original.testImage() == cloned.testImage() {
 		t.Fatal("clone branches should hold independent current images")
 	}
-	if original.currentImage == image.Image(source) || cloned.currentImage == image.Image(source) {
+	if original.testImage() == image.Image(source) || cloned.testImage() == image.Image(source) {
 		t.Fatal("clone branch operation reused the shared source as its destination")
 	}
 }

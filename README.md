@@ -18,6 +18,8 @@ A fluent, thread-safe Go image processing library with chainable operations.
 - **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
 - **Text Watermarks**: Add customizable text overlays with font control
 
+The root `gopiq` package is the supported public API; implementation details live in `internal/engine`. See [Architecture](docs/architecture.md) for the package boundaries and planned CLI layout.
+
 ## Installation
 
 ```bash

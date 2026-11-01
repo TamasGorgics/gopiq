@@ -4,7 +4,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"runtime"
 	"sync"
 	"testing"
 )
@@ -18,10 +17,10 @@ func TestM1CropUsesSourceCoordinatesAndChecksOverflow(t *testing.T) {
 	if err := processor.Err(); err != nil {
 		t.Fatalf("Crop on non-zero-origin image failed: %v", err)
 	}
-	if got, want := processor.currentImage.Bounds(), image.Rect(0, 0, 3, 2); got != want {
+	if got, want := processor.testImage().Bounds(), image.Rect(0, 0, 3, 2); got != want {
 		t.Fatalf("cropped bounds = %v, want %v", got, want)
 	}
-	if !sameM1Color(source.At(11, 21), processor.currentImage.At(0, 0)) {
+	if !sameM1Color(source.At(11, 21), processor.testImage().At(0, 0)) {
 		t.Fatal("cropped image did not preserve the source pixel at the crop origin")
 	}
 	if !sameM1Pixels(before, captureM1Pixels(source)) {
@@ -54,7 +53,7 @@ func TestM1CropUsesSourceCoordinatesAndChecksOverflow(t *testing.T) {
 
 func TestM1ImageOperationsRejectUnrepresentableBuffers(t *testing.T) {
 	maxInt := int(^uint(0) >> 1)
-	width := maxInt/rgbaBytesPerPixel + 1
+	width := maxInt/testRGBABytesPerPixel + 1
 	source := m1BoundsImage{bounds: image.Rect(0, 0, width, 1)}
 
 	if err := New(source).Crop(0, 0, width, 1).Err(); err == nil {
@@ -105,7 +104,7 @@ func TestM1ResizeSupportsNonZeroBoundsAndPreservesSource(t *testing.T) {
 	if err := processor.Err(); err != nil {
 		t.Fatalf("Resize on non-zero-origin image failed: %v", err)
 	}
-	if got, want := processor.currentImage.Bounds(), image.Rect(0, 0, 9, 4); got != want {
+	if got, want := processor.testImage().Bounds(), image.Rect(0, 0, 9, 4); got != want {
 		t.Fatalf("resized bounds = %v, want %v", got, want)
 	}
 	if !sameM1Pixels(before, captureM1Pixels(source)) {
@@ -161,10 +160,10 @@ func TestM1GrayscaleEmptyImagesAreNoOps(t *testing.T) {
 					t.Errorf("%s grayscale returned an error: %v", name, err)
 					continue
 				}
-				if processor.currentImage != source {
+				if processor.testImage() != source {
 					t.Errorf("%s grayscale replaced an empty image instead of leaving it unchanged", name)
 				}
-				if got := processor.currentImage.Bounds(); got != bounds {
+				if got := processor.testImage().Bounds(); got != bounds {
 					t.Errorf("%s grayscale bounds = %v, want %v", name, got, bounds)
 				}
 			}
@@ -238,42 +237,6 @@ func TestM1PerformanceOptionsCanChangeConcurrentlyWithGrayscale(t *testing.T) {
 	}
 }
 
-func TestM1PerformanceThresholdAndWorkerLimits(t *testing.T) {
-	defaultOptions := DefaultPerformanceOptions()
-	if shouldUseParallelProcessing(9_999, defaultOptions) {
-		t.Fatal("default options selected parallel processing below their threshold")
-	}
-	if !shouldUseParallelProcessing(10_000, defaultOptions) {
-		t.Fatal("default options did not select parallel processing at their threshold")
-	}
-	if !shouldUseParallelProcessing(1, PerformanceOptions{EnableParallelProcessing: true, MinSizeForParallel: 0}) {
-		t.Fatal("zero threshold should allow parallel processing for a non-empty image")
-	}
-	if !shouldUseParallelProcessing(1, PerformanceOptions{EnableParallelProcessing: true, MinSizeForParallel: -1}) {
-		t.Fatal("negative threshold should allow parallel processing for a non-empty image")
-	}
-	if shouldUseParallelProcessing(100, PerformanceOptions{EnableParallelProcessing: false, MinSizeForParallel: 0}) {
-		t.Fatal("disabled parallel processing selected the parallel path")
-	}
-
-	if got := grayscaleWorkerCount(0, 4); got != 0 {
-		t.Fatalf("worker count for empty image = %d, want 0", got)
-	}
-	if got := grayscaleWorkerCount(1, 8); got != 1 {
-		t.Fatalf("worker count for one row = %d, want 1", got)
-	}
-	if got := grayscaleWorkerCount(8, 3); got != 3 {
-		t.Fatalf("worker count with explicit limit = %d, want 3", got)
-	}
-	defaultWorkers := runtime.NumCPU()
-	if defaultWorkers > 8 {
-		defaultWorkers = 8
-	}
-	if got := grayscaleWorkerCount(8, 0); got != defaultWorkers {
-		t.Fatalf("worker count for non-positive limit = %d, want %d", got, defaultWorkers)
-	}
-}
-
 func checkM1GrayscalePaths(t *testing.T, source image.Image) {
 	t.Helper()
 	before := captureM1Pixels(source)
@@ -289,10 +252,10 @@ func checkM1GrayscalePaths(t *testing.T, source image.Image) {
 	if err := fast.Err(); err != nil {
 		t.Fatalf("GrayscaleFast failed: %v", err)
 	}
-	if got, want := standard.currentImage.Bounds(), source.Bounds(); got != want {
+	if got, want := standard.testImage().Bounds(), source.Bounds(); got != want {
 		t.Fatalf("Grayscale bounds = %v, want source bounds %v", got, want)
 	}
-	if got, want := fast.currentImage.Bounds(), source.Bounds(); got != want {
+	if got, want := fast.testImage().Bounds(), source.Bounds(); got != want {
 		t.Fatalf("GrayscaleFast bounds = %v, want source bounds %v", got, want)
 	}
 
@@ -301,8 +264,8 @@ func checkM1GrayscalePaths(t *testing.T, source image.Image) {
 	draw.Draw(normalized, bounds, source, bounds.Min, draw.Src)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			standardColor := standard.currentImage.At(x, y)
-			fastColor := fast.currentImage.At(x, y)
+			standardColor := standard.testImage().At(x, y)
+			fastColor := fast.testImage().At(x, y)
 			if !sameM1Color(standardColor, fastColor) {
 				t.Fatalf("grayscale paths differ at (%d,%d)", x, y)
 			}

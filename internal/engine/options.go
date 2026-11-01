@@ -26,6 +26,7 @@ func DefaultOptions() Options {
 // Format identifies a recognized image format. GIF is decode-only.
 type Format int
 
+// Recognized image formats.
 const (
 	FormatUnknown Format = iota
 	FormatJPEG
@@ -50,6 +51,7 @@ func (f Format) String() string {
 // Position defines a watermark anchor.
 type Position int
 
+// Supported watermark anchor positions.
 const (
 	PositionTopLeft Position = iota
 	PositionTopRight
@@ -61,6 +63,7 @@ const (
 // FontSource identifies where watermark font data comes from.
 type FontSource uint8
 
+// Supported watermark font sources.
 const (
 	FontSourceUnset FontSource = iota
 	FontSourceBytes

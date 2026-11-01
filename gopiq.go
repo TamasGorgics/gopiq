@@ -94,6 +94,8 @@ func (p *ImageProcessor) ToBytes(format ImageFormat) ([]byte, error) {
 // processor or its clones are in use. Mutating an image through a concrete-type
 // assertion is outside the thread-safety guarantee.
 // This method is safe for concurrent use.
+//
+//nolint:nilnil // The zero-value processor intentionally has no image and no error.
 func (p *ImageProcessor) Image() (image.Image, error) {
 	core := p.processor()
 	if core == nil {

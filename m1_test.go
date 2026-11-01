@@ -1,6 +1,7 @@
 package gopiq
 
 import (
+	"errors"
 	"image"
 	"image/color"
 	"image/draw"
@@ -46,7 +47,7 @@ func TestM1CropUsesSourceCoordinatesAndChecksOverflow(t *testing.T) {
 	chain := New(createTestImage(2, 2)).Crop(maxInt, 0, 1, 1)
 	firstErr := chain.Err()
 	chain.Resize(1, 1).Grayscale()
-	if chain.Err() != firstErr {
+	if !errors.Is(chain.Err(), firstErr) {
 		t.Fatalf("later operations replaced the first error: got %v, want %v", chain.Err(), firstErr)
 	}
 }

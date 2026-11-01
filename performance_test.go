@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"runtime"
 	"testing"
-	"time"
 )
 
 // createLargeTestImage creates a large test image for performance testing
@@ -24,36 +23,9 @@ func createLargeTestImage(width, height int) image.Image {
 	return img
 }
 
-// Benchmark the original slow grayscale implementation for comparison
-func benchmarkGrayscaleSlow(b *testing.B, width, height int) {
-	img := createLargeTestImage(width, height)
-
-	b.ReportAllocs()
-
-	for b.Loop() {
-		// Simulate the old slow method using At/Set.
-		_ = grayscaleSlowImage(img)
-	}
-}
-
-// grayscaleSlowImage simulates the original slow implementation.
-func grayscaleSlowImage(img image.Image) *image.RGBA {
-	bounds := img.Bounds()
-	grayImg := image.NewRGBA(bounds)
-
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			originalColor := img.At(x, y)
-			grayColor := color.GrayModel.Convert(originalColor).(color.Gray)
-			grayImg.Set(x, y, grayColor)
-		}
-	}
-
-	return grayImg
-}
-
 // Benchmark the optimized grayscale implementation
 func benchmarkGrayscaleOptimized(b *testing.B, width, height int) {
+	b.Helper()
 	img := createLargeTestImage(width, height)
 
 	b.ReportAllocs()
@@ -69,6 +41,7 @@ func benchmarkGrayscaleOptimized(b *testing.B, width, height int) {
 
 // Benchmark the parallel grayscale implementation
 func benchmarkGrayscaleFast(b *testing.B, width, height int) {
+	b.Helper()
 	img := createLargeTestImage(width, height)
 
 	b.ReportAllocs()
@@ -83,10 +56,6 @@ func benchmarkGrayscaleFast(b *testing.B, width, height int) {
 }
 
 // Small image benchmarks (100x100)
-func BenchmarkGrayscaleSmall_Slow(b *testing.B) {
-	benchmarkGrayscaleSlow(b, 100, 100)
-}
-
 func BenchmarkGrayscaleSmall_Optimized(b *testing.B) {
 	benchmarkGrayscaleOptimized(b, 100, 100)
 }
@@ -96,10 +65,6 @@ func BenchmarkGrayscaleSmall_Fast(b *testing.B) {
 }
 
 // Medium image benchmarks (500x500)
-func BenchmarkGrayscaleMedium_Slow(b *testing.B) {
-	benchmarkGrayscaleSlow(b, 500, 500)
-}
-
 func BenchmarkGrayscaleMedium_Optimized(b *testing.B) {
 	benchmarkGrayscaleOptimized(b, 500, 500)
 }
@@ -109,10 +74,6 @@ func BenchmarkGrayscaleMedium_Fast(b *testing.B) {
 }
 
 // Large image benchmarks (1920x1080)
-func BenchmarkGrayscaleLarge_Slow(b *testing.B) {
-	benchmarkGrayscaleSlow(b, 1920, 1080)
-}
-
 func BenchmarkGrayscaleLarge_Optimized(b *testing.B) {
 	benchmarkGrayscaleOptimized(b, 1920, 1080)
 }
@@ -122,13 +83,6 @@ func BenchmarkGrayscaleLarge_Fast(b *testing.B) {
 }
 
 // Very large image benchmarks (4K: 3840x2160)
-func BenchmarkGrayscaleXL_Slow(b *testing.B) {
-	if testing.Short() {
-		b.Skip("Skipping slow benchmark in short mode")
-	}
-	benchmarkGrayscaleSlow(b, 3840, 2160)
-}
-
 func BenchmarkGrayscaleXL_Optimized(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping large benchmark in short mode")
@@ -165,26 +119,23 @@ func BenchmarkGrayscaleParallelGoroutines(b *testing.B) {
 	}
 }
 
-// Benchmark memory allocation patterns
-func BenchmarkMemoryAllocation(b *testing.B) {
+// Benchmark allocation patterns for common processing pipelines.
+func BenchmarkPipelineAllocations(b *testing.B) {
 	img := createLargeTestImage(800, 600)
 
-	b.Run("without_pool", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			// Create multiple processors to test allocation patterns
-			proc1 := New(img)
-			proc2 := proc1.Clone()
-			proc3 := proc2.Clone()
+	b.ReportAllocs()
+	for b.Loop() {
+		proc1 := New(img)
+		proc2 := proc1.Clone()
+		proc3 := proc2.Clone()
 
-			proc1.Grayscale()
-			proc2.GrayscaleFast()
-			proc3.Resize(400, 300)
-		}
-	})
+		proc1.Grayscale()
+		proc2.GrayscaleFast()
+		proc3.Resize(400, 300)
+	}
 }
 
-// Test concurrent performance under realistic load
+// Benchmark concurrent processing under realistic load.
 func BenchmarkConcurrentProcessing(b *testing.B) {
 	img := createLargeTestImage(1000, 1000)
 
@@ -196,7 +147,7 @@ func BenchmarkConcurrentProcessing(b *testing.B) {
 		}
 	})
 
-	b.Run("parallel_4", func(b *testing.B) {
+	b.Run("parallel", func(b *testing.B) {
 		b.ReportAllocs()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
@@ -205,53 +156,4 @@ func BenchmarkConcurrentProcessing(b *testing.B) {
 			}
 		})
 	})
-}
-
-// Performance test that prints detailed timing information
-func TestPerformanceComparison(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping performance comparison in short mode")
-	}
-
-	t.Log("Performance Comparison Test")
-	t.Log("============================")
-
-	sizes := []struct {
-		name   string
-		width  int
-		height int
-	}{
-		{"Small (400x300)", 400, 300},
-		{"Medium (800x600)", 800, 600},
-		{"Large (1920x1080)", 1920, 1080},
-	}
-
-	for _, size := range sizes {
-		t.Logf("\n%s Images:", size.name)
-		img := createLargeTestImage(size.width, size.height)
-
-		// Test slow method
-		start := time.Now()
-		_ = grayscaleSlowImage(img)
-		slowTime := time.Since(start)
-
-		// Test optimized method
-		start = time.Now()
-		proc2 := New(img)
-		proc2.Grayscale()
-		optimizedTime := time.Since(start)
-
-		// Test parallel method
-		start = time.Now()
-		proc3 := New(img)
-		proc3.GrayscaleFast()
-		fastTime := time.Since(start)
-
-		speedupOptimized := float64(slowTime) / float64(optimizedTime)
-		speedupFast := float64(slowTime) / float64(fastTime)
-
-		t.Logf("  Slow method:      %v", slowTime)
-		t.Logf("  Optimized method: %v (%.1fx faster)", optimizedTime, speedupOptimized)
-		t.Logf("  Parallel method:  %v (%.1fx faster)", fastTime, speedupFast)
-	}
 }

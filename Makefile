@@ -17,7 +17,7 @@ LINT_CMD=golangci-lint
 BINARY_NAME=gopiq
 BINARY_UNIX=$(BINARY_NAME)_unix
 
-.PHONY: all build test cover lint clean help docs-serve docs-build
+.PHONY: all build test cover bench vet lint clean help docs-serve docs-build
 
 all: build
 
@@ -40,6 +40,15 @@ cover:
 cover-html: cover
 	@echo "Opening coverage report in browser..."
 	@go tool cover -html=coverage.out
+
+# Benchmark commands
+bench:
+	@echo "Running benchmarks..."
+	@$(GOTEST) -run '^$$' -bench . -benchmem ./...
+
+vet:
+	@echo "Running go vet..."
+	@$(GOCMD) vet ./...
 
 # Lint commands
 lint:
@@ -70,6 +79,8 @@ help:
 	@echo "  test          Run tests with race condition detection"
 	@echo "  cover         Run tests and generate a coverage profile"
 	@echo "  cover-html    Open the HTML coverage report in a browser"
+	@echo "  bench         Run all benchmarks"
+	@echo "  vet           Run go vet"
 	@echo "  lint          Run the golangci-lint linter"
 	@echo "  docs-serve    Serve the documentation site locally"
 	@echo "  docs-build    Build the documentation site"

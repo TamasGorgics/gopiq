@@ -18,15 +18,15 @@ The Go 1.27.0 minimum is part of this specification. The CI matrix checks that m
 
 ## 2. Audit baseline and resolution status
 
-The initial audit found the following gaps. M0–M3 have resolved the first five listed items; the remaining two are assigned to M4.
+The initial audit found the following gaps. M0–M4 have resolved all listed items.
 
 - **Resolved in M0:** Standalone examples previously redeclared `main` in one package, breaking `go build ./...` and `go test ./...`; they now build independently.
 - **Resolved in M1:** Parallel grayscale previously mishandled non-zero-origin bounds, and empty images or unsafe dimensions could reach invalid operations.
 - **Resolved in M2:** `WithFontPath` previously had no effect; font-source ordering and option validation are now implemented.
 - **Resolved in M2:** GIF was described as decodable but its decoder was not registered by the library.
 - **Resolved in M3:** `Clone` is now documented and tested as a shallow copy, and the concurrency contract covers per-call synchronization, non-atomic chains, and read-only images.
-- **Open for M4:** The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims the implementation does not substantiate.
-- **Open for M4:** `TestPerformanceComparison` performs timing work as a regular test despite having no performance assertion.
+- **Resolved in M4:** The unused RGBA pool and unsupported pooling/SIMD claims were removed; performance documentation now reports measured benchmarks with environment and workload details.
+- **Resolved in M4:** Timing comparisons were removed from ordinary tests and performance measurement now lives in benchmarks.
 
 ## 3. Requirements
 

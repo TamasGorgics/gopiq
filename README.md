@@ -156,92 +156,32 @@ func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
 
 If both font-source options are provided, the last one wins. With neither option, the embedded Go font is used. Watermark positions are relative to the image bounds; text outside the image is clipped. Positive offsets inset corner anchors and move centered text right/down.
 
-## Performance Notes
+## Processing Notes
 
 - For non-empty images, each operation creates a new destination image and leaves its source unchanged (memory-intensive)
 - Use `Clone()` to branch processor state; clones share the read-only source image
 - Consider image size limits for memory-constrained environments
 - Catmull-Rom resizing provides high quality but is computationally intensive
 
-## Performance Optimizations
+## Performance
 
-**gopiq** includes advanced performance optimizations that can provide dramatic speed improvements:
+`GrayscaleFast()` uses parallel workers for non-empty images when parallel processing is enabled and the image meets the configured threshold. Performance depends on image size, CPU, workload, and options; no universal speedup is guaranteed.
 
-### Optimized Methods
-
-#### **GrayscaleFast()** - Parallel Processing
-For large images, use `GrayscaleFast()` instead of `Grayscale()`:
-
-```go
-// Up to 33x faster for large images (1920x1080)
-processor := gopiq.New(image).GrayscaleFast()
-```
-
-#### **Performance Results** (500x500 images on Apple M1 Pro):
-- **Slow method** (At/Set): 7.17ms, 3MB allocations 
-- **Optimized method**: 735μs, 1MB allocations (**9.7x faster**)
-- **Parallel method**: 276μs, 1MB allocations (**26x faster**)
+See [Performance](docs/performance.md) for the benchmark environment, commands, and current measured results.
 
 ### Performance Configuration
 
 ```go
-// Custom performance settings
 opts := gopiq.PerformanceOptions{
-    MaxGoroutines:            8,     // Limit parallel goroutines
-    EnableParallelProcessing: true,  // Enable parallel processing
-    MinSizeForParallel:       10000, // Minimum pixels for parallel
+    MaxGoroutines:            8,
+    EnableParallelProcessing: true,
+    MinSizeForParallel:       10000,
 }
 
 processor := gopiq.NewWithPerformanceOptions(image, opts)
 ```
 
-### Scalability
-
-**Parallel Processing Performance** (1920x1080 images):
-- 1 goroutine: 5.87ms
-- 2 goroutines: 3.11ms (**1.9x faster**)
-- 4 goroutines: 1.77ms (**3.3x faster**)
-- 8 goroutines: 1.23ms (**4.8x faster**)
-
-### Optimization Techniques
-
-1. **Direct Buffer Access**: Bypasses Go's interface overhead
-2. **Parallel Processing**: Utilizes multiple CPU cores automatically
-3. **Memory Pooling**: Reduces garbage collection pressure
-4. **SIMD-friendly Operations**: CPU-optimized pixel processing
-5. **ITU-R BT.709 Grayscale**: Professional-grade color conversion
-
-### Performance Tips
-
-- Use `GrayscaleFast()` for images larger than 100x100 pixels
-- Set `MaxGoroutines` to match your CPU cores for optimal performance
-- Process multiple images in parallel using `Clone()`
-- Consider image size vs. processing time trade-offs
-
-Example for batch processing:
-```go
-func processImagesOptimized(images []image.Image) []*gopiq.ImageProcessor {
-    results := make([]*gopiq.ImageProcessor, len(images))
-    var wg sync.WaitGroup
-    
-    for i, img := range images {
-        wg.Add(1)
-        go func(index int, image image.Image) {
-            defer wg.Done()
-            results[index] = gopiq.New(image).
-                SetPerformanceOptions(gopiq.PerformanceOptions{
-                    MaxGoroutines: runtime.NumCPU(),
-                    EnableParallelProcessing: true,
-                }).
-                Resize(800, 600).
-                GrayscaleFast()
-        }(i, img)
-    }
-    
-    wg.Wait()
-    return results
-}
-```
+Use `GrayscaleFast()` for large images or workloads where the measured parallel path is beneficial. Use `Clone()` when processing multiple independent images in parallel.
 
 ## License
 

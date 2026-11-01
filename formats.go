@@ -10,6 +10,7 @@ import (
 // JPEG and PNG are supported for both decoding and encoding.
 type ImageFormat int
 
+// Supported image formats.
 const (
 	FormatUnknown ImageFormat = iota
 	FormatJPEG

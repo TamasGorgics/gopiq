@@ -2,6 +2,7 @@ package gopiq
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -137,6 +138,36 @@ func TestToBytes(t *testing.T) {
 	_, err = procWithErr.ToBytes(FormatPNG)
 	if err == nil {
 		t.Fatal("ToBytes() on a processor with prior error should return that error")
+	}
+}
+
+func TestToBytesUnknownFormat(t *testing.T) {
+	proc := New(createTestImage(4, 4))
+	if _, err := proc.ToBytes(ImageFormat(99)); err == nil {
+		t.Fatal("ToBytes() accepted an unknown format")
+	}
+	if got := ImageFormat(99).String(); got != "unknown" {
+		t.Fatalf("ImageFormat(99).String() = %q, want unknown", got)
+	}
+}
+
+func TestZeroValueProcessor(t *testing.T) {
+	var proc ImageProcessor
+	if err := proc.Err(); err != nil {
+		t.Fatalf("zero-value Err() = %v, want nil", err)
+	}
+	img, err := proc.Image()
+	if err != nil {
+		t.Fatalf("zero-value Image() error = %v", err)
+	}
+	if img != nil {
+		t.Fatal("zero-value Image() should return nil")
+	}
+	if _, err := proc.ToBytes(FormatPNG); err == nil {
+		t.Fatal("zero-value ToBytes() should return an error")
+	}
+	if err := proc.Crop(0, 0, 1, 1).Err(); err == nil {
+		t.Fatal("zero-value Crop() should return an error")
 	}
 }
 
@@ -461,7 +492,7 @@ func TestClone(t *testing.T) {
 	// Clone is shallow: processor state is copied, image storage is shared.
 	originalImage, originalErr := proc.Image()
 	clonedImage, clonedErr := cloned.Image()
-	if originalErr != clonedErr {
+	if !errors.Is(originalErr, clonedErr) {
 		t.Errorf("Clone error mismatch: original=%v, cloned=%v", originalErr, clonedErr)
 	}
 	if originalImage != clonedImage || clonedImage != originalImg {
@@ -587,7 +618,6 @@ func TestConcurrentProcessing(t *testing.T) {
 	// Multiple goroutines process clones that share the same read-only source.
 	for index := range numGoroutines {
 		wg.Go(func() {
-
 			// Each goroutine works with its own clone
 			proc := New(originalImg).Clone()
 
@@ -636,7 +666,6 @@ func TestConcurrentChaining(t *testing.T) {
 	// Test concurrent chaining operations
 	for index := range numGoroutines {
 		wg.Go(func() {
-
 			// Each goroutine creates its own processor
 			proc := New(originalImg)
 

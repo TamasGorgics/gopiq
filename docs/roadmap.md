@@ -51,7 +51,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M4 — Establish reliable quality gates and truthful performance docs
 
-**Priority:** P1 · **Requirements:** BLD-4, Q-1–Q-6
+**Status:** Complete · **Priority:** P1 · **Requirements:** BLD-4, Q-1–Q-6
 
 - Move timing comparisons out of regular tests and into benchmarks or a separately invoked tool.
 - Decide whether the unused RGBA pool is worth implementing; remove it and its claims if measurements do not support it.

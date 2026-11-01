@@ -1,0 +1,195 @@
+# golangci-lint configuration for gopiq.
+# Examples are standalone demos and are excluded from library lint rules.
+
+version: "2"
+
+run:
+  concurrency: 4
+  go: "1.27"
+  issues-exit-code: 1
+  tests: true
+  allow-parallel-runners: false
+
+linters:
+  enable:
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - cyclop
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - forbidigo
+    - funlen
+    - gocognit
+    - goconst
+    - gocritic
+    - godot
+    - godox
+    - gosec
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - testableexamples
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+  disable:
+    - containedctx
+    - exhaustruct
+    - gochecknoglobals
+    - gochecknoinits
+    - interfacebloat
+    - ireturn
+    - lll
+    - nlreturn
+    - paralleltest
+    - varnamelen
+    - wrapcheck
+    - wsl
+  settings:
+    cyclop:
+      max-complexity: 15
+      package-average: 10
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - io/ioutil.ReadFile
+        - io.Copy(*bytes.Buffer)
+        - fmt.Print
+        - fmt.Printf
+        - fmt.Println
+    exhaustive:
+      default-signifies-exhaustive: true
+    funlen:
+      lines: 80
+      statements: 50
+    gocognit:
+      min-complexity: 15
+    gocritic:
+      disabled-checks:
+        - hugeParam
+        - rangeExprCopy
+        - rangeValCopy
+        - unnamedResult
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+        - experimental
+    godot:
+      scope: declarations
+      exclude:
+        - '^fixme:'
+        - '^todo:'
+        - '^TODO:'
+        - '^FIXME:'
+    gosec:
+      excludes:
+        - G115
+      config:
+        G301: "0644"
+        G302: "0644"
+    govet:
+      disable:
+        - fieldalignment
+        - shadow
+      enable-all: true
+    perfsprint:
+      error-format: false
+      errorf: false
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+          disabled: true
+        - name: unreachable-code
+        - name: redefines-builtin-id
+    unparam:
+      check-exported: false
+  exclusions:
+    generated: lax
+    paths:
+      - examples/
+    rules:
+      - linters:
+          - cyclop
+          - errcheck
+          - funlen
+          - gocognit
+          - goconst
+          - godot
+          - gosec
+          - nestif
+        path: _test\.go
+      - linters:
+          - cyclop
+          - funlen
+          - gocognit
+          - godot
+          - godox
+        path: performance_test\.go
+      - linters:
+          - goconst
+          - mnd
+        text: 'Magic number: (255|128|100|24|72|0\.2126|0\.7152|0\.0722)'
+      - linters:
+          - godox
+        text: Line contains TODO
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - TamasGorgics/gopiq
+  exclusions:
+    generated: lax
+    paths:
+      - examples/

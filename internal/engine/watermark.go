@@ -16,6 +16,8 @@ import (
 
 // AddTextWatermark adds a text watermark. optionErr carries an option-level
 // failure discovered by the public facade so the first chain error is preserved.
+//
+//nolint:cyclop,funlen,gocognit // The renderer keeps layout and fixed-point handling together.
 func (p *Processor) AddTextWatermark(text string, cfg WatermarkConfig, optionErr error) *Processor {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -85,7 +87,11 @@ func (p *Processor) AddTextWatermark(text string, cfg WatermarkConfig, optionErr
 		p.err = fmt.Errorf("failed to create font face for watermark: %w", err)
 		return p
 	}
-	defer face.Close()
+	defer func() {
+		if closeErr := face.Close(); closeErr != nil && p.err == nil {
+			p.err = fmt.Errorf("failed to close watermark font: %w", closeErr)
+		}
+	}()
 
 	metrics := face.Metrics()
 	if metrics.Height < 0 || metrics.Ascent < 0 || metrics.Descent < 0 {
@@ -206,11 +212,8 @@ func validateWatermarkConfig(cfg WatermarkConfig) error {
 	if cfg.Text == "" {
 		return fmt.Errorf("watermark text cannot be empty")
 	}
-	if math.IsNaN(cfg.FontSize) || math.IsInf(cfg.FontSize, 0) || cfg.FontSize <= 0 {
-		return fmt.Errorf("watermark font size must be finite and positive")
-	}
-	if cfg.FontSize > maxWatermarkFontSize {
-		return fmt.Errorf("watermark font size exceeds the renderer's fixed-point range")
+	if err := validateWatermarkFontSize(cfg.FontSize); err != nil {
+		return err
 	}
 	if isNilColor(cfg.Color) {
 		return fmt.Errorf("watermark color cannot be nil")
@@ -218,19 +221,39 @@ func validateWatermarkConfig(cfg WatermarkConfig) error {
 	if cfg.Position < PositionTopLeft || cfg.Position > PositionCenter {
 		return fmt.Errorf("unknown watermark position: %d", cfg.Position)
 	}
-	if math.IsNaN(cfg.OffsetX) || math.IsInf(cfg.OffsetX, 0) || math.IsNaN(cfg.OffsetY) || math.IsInf(cfg.OffsetY, 0) {
+	if !finiteWatermarkOffsets(cfg) {
 		return fmt.Errorf("watermark offsets must be finite")
 	}
+	return validateWatermarkFontSource(cfg)
+}
+
+func validateWatermarkFontSize(size float64) error {
+	if math.IsNaN(size) || math.IsInf(size, 0) || size <= 0 {
+		return fmt.Errorf("watermark font size must be finite and positive")
+	}
+	if size > maxWatermarkFontSize {
+		return fmt.Errorf("watermark font size exceeds the renderer's fixed-point range")
+	}
+	return nil
+}
+
+func finiteWatermarkOffsets(cfg WatermarkConfig) bool {
+	return !math.IsNaN(cfg.OffsetX) && !math.IsInf(cfg.OffsetX, 0) &&
+		!math.IsNaN(cfg.OffsetY) && !math.IsInf(cfg.OffsetY, 0)
+}
+
+func validateWatermarkFontSource(cfg WatermarkConfig) error {
 	switch cfg.FontSource {
 	case FontSourceBytes:
+		return nil
 	case FontSourcePath:
 		if cfg.FontPath == "" {
 			return fmt.Errorf("watermark font path cannot be empty")
 		}
+		return nil
 	default:
 		return fmt.Errorf("watermark font source is not configured")
 	}
-	return nil
 }
 
 func isNilColor(c color.Color) bool {

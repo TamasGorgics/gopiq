@@ -9,6 +9,7 @@ import (
 // WatermarkPosition defines common positions for the watermark.
 type WatermarkPosition int
 
+// Supported watermark anchor positions.
 const (
 	PositionTopLeft WatermarkPosition = iota
 	PositionTopRight
@@ -97,6 +98,8 @@ func WithOffset(x, y float64) WatermarkOption {
 func toEngineWatermarkConfig(cfg *watermarkConfig) engine.WatermarkConfig {
 	out := engine.DefaultWatermarkConfig()
 	switch cfg.fontSource {
+	case watermarkFontSourceUnset:
+		// Keep the engine's embedded default font.
 	case watermarkFontSourceBytes:
 		out.FontBytes = cfg.FontBytes
 		out.FontSource = engine.FontSourceBytes

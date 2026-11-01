@@ -304,6 +304,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../../batch/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Batch Processing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../../performance/" class="md-tabs__link">
         
   
@@ -684,6 +703,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../../batch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Batch Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../performance/" class="md-nav__link">
         
   
@@ -855,6 +901,7 @@
 <li><code>FromBytesWithLimits(data []byte, limits DecodeLimits) *ImageProcessor</code> - Decode bytes with explicit limits</li>
 <li><code>FromReader(r io.Reader) *ImageProcessor</code> - Decode from a reader using <code>DefaultDecodeLimits</code></li>
 <li><code>FromReaderWithLimits(r io.Reader, limits DecodeLimits) *ImageProcessor</code> - Decode from a reader with explicit limits</li>
+<li><code>ProcessBatch(ctx context.Context, images []image.Image, operation func(*ImageProcessor) *ImageProcessor, options BatchOptions) ([]*ImageProcessor, error)</code> - Process images with bounded concurrency and ordered results</li>
 <li><code>Clone() *ImageProcessor</code> - Create a shallow processor copy; error and performance state are copied, image storage is shared</li>
 <li><code>Image() (image.Image, error)</code> - Get the current image for reading</li>
 <li><code>ToBytes(format ImageFormat) ([]byte, error)</code> - Export to an in-memory byte slice</li>
@@ -863,7 +910,7 @@
 </ul>
 <p>Methods are individually synchronized, but a multi-call chain is not atomic. Images passed to <code>New</code> and images returned by <code>Image</code> must be treated as read-only while the processor or its clones may be used concurrently. <code>Clone</code> does not deep-copy pixels.</p>
 <p><code>ToBytes</code> and <code>ToWriter</code> support JPEG, PNG, and GIF output. GIF output uses the Go standard-library Plan 9 palette, Floyd–Steinberg dithering, white alpha flattening, and a single frame.</p>
-<p>See <a href="../../streaming/">Streaming and Decode Limits</a> for <code>DecodeLimits</code>, <code>DefaultDecodeLimits</code>, <code>ErrDecodeLimit</code>, ownership, and writer error behavior.</p>
+<p>See <a href="../../streaming/">Streaming and Decode Limits</a> for <code>DecodeLimits</code>, <code>DefaultDecodeLimits</code>, <code>ErrDecodeLimit</code>, ownership, and writer error behavior. See <a href="../../batch/">Batch Processing</a> for ordered results, bounded workers, cancellation, and per-item errors.</p>
 
 
 

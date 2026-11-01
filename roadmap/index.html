@@ -300,6 +300,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../batch/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Batch Processing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../performance/" class="md-tabs__link">
         
   
@@ -648,6 +667,33 @@
     
   
     Streaming & Limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../batch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Batch Processing
   
 
     
@@ -1216,12 +1262,12 @@
 </ul>
 <p><strong>Exit criteria:</strong> Each selected feature has a written API contract, pixel-level tests, and documentation before implementation is considered complete.</p>
 <h3 id="m8-optimize-measured-workloads-and-support-bounded-batches">M8 — Optimize measured workloads and support bounded batches<a class="headerlink" href="#m8-optimize-measured-workloads-and-support-bounded-batches" title="Permanent link">&para;</a></h3>
-<p><strong>Priority:</strong> P3 · <strong>Requirements:</strong> EXT-6–EXT-8</p>
+<p><strong>Status:</strong> Complete · <strong>Priority:</strong> P3 · <strong>Requirements:</strong> EXT-6–EXT-8</p>
 <ul>
-<li>Benchmark representative image sizes and processor counts; tune parallel thresholds based on reproducible results.</li>
-<li>Consider pooling, fixed-point arithmetic, SIMD, or other specialized paths only when profiling justifies them.</li>
-<li>Design bounded batch processing with explicit ordering, concurrency, and cancellation semantics.</li>
-<li>Expand fuzz, platform, and Go-version coverage according to the declared support policy.</li>
+<li>Add <code>ProcessBatch</code> with bounded workers, ordered results, per-item errors, and context cancellation.</li>
+<li>Benchmark representative image sizes and processor counts; document the selected defaults and evaluate specialized paths.</li>
+<li>Keep pooling, fixed-point arithmetic, and SIMD out unless measurements justify them.</li>
+<li>Expand fuzz, platform, and Go-version coverage and add documentation-example checks.</li>
 </ul>
 <p><strong>Exit criteria:</strong> Optimizations show a repeatable benefit without changing specified output semantics, and batch/resource behavior is bounded and tested.</p>
 <h2 id="cross-milestone-rules">Cross-milestone rules<a class="headerlink" href="#cross-milestone-rules" title="Permanent link">&para;</a></h2>

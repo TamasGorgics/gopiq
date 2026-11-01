@@ -302,6 +302,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../batch/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Batch Processing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../performance/" class="md-tabs__link">
         
   
@@ -669,6 +688,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../batch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Batch Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../performance/" class="md-nav__link">
         
   
@@ -942,6 +988,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#310-bounded-batch-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.10 Bounded batch processing
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1163,6 +1220,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#310-bounded-batch-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.10 Bounded batch processing
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1306,28 +1374,33 @@
 <li><strong>CLI-4:</strong> Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.</li>
 <li><strong>CLI-5:</strong> The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.</li>
 </ul>
+<h3 id="310-bounded-batch-processing">3.10 Bounded batch processing<a class="headerlink" href="#310-bounded-batch-processing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>BATCH-1:</strong> <code>ProcessBatch</code> must process independent images with a bounded worker count and return results indexed by input position.</li>
+<li><strong>BATCH-2:</strong> Input images are read-only; each callback receives a separate processor. Per-image processing errors remain on the corresponding result and do not stop unrelated items.</li>
+<li><strong>BATCH-3:</strong> Cancellation must stop scheduling new items, wait for in-flight operations, return completed partial results, leave unstarted slots nil, and return <code>ctx.Err()</code>.</li>
+<li><strong>BATCH-4:</strong> A nil context or operation must return an error; empty input returns an empty result slice and no error. <code>MaxWorkers &lt;= 0</code> uses the runtime default and is capped by the input count.</li>
+</ul>
 <h2 id="4-extensions">4. Extensions<a class="headerlink" href="#4-extensions" title="Permanent link">&para;</a></h2>
-<p>The following extensions were implemented in M6–M7:</p>
+<p>The following extensions were implemented in M6–M8:</p>
 <ul>
 <li><strong>EXT-1 — Streaming I/O:</strong> Implemented through <code>FromReader</code> and <code>ToWriter</code>; existing byte APIs remain supported.</li>
 <li><strong>EXT-2 — Decode limits:</strong> Implemented through <code>DecodeLimits</code>, with encoded-size and dimension validation.</li>
 <li><strong>EXT-3 — Aspect-ratio operations:</strong> Implemented through <code>ResizeFit</code> and <code>ResizeFill</code>; see IMG-6.</li>
 <li><strong>EXT-4 — Additional operations:</strong> Flips and 90-degree rotations implemented; image watermarks remain planned.</li>
 <li><strong>EXT-5 — Additional formats:</strong> Single-frame GIF output implemented with the FMT-3 policy; other formats remain planned.</li>
+<li><strong>EXT-6 — Bounded batch processing:</strong> Implemented through <code>ProcessBatch</code>, with ordered results, bounded workers, and cancellation.</li>
+<li><strong>EXT-7 — Benchmark-led optimization:</strong> Representative workloads benchmarked; no specialized pooling, SIMD, or fixed-point paths selected.</li>
+<li><strong>EXT-8 — Expanded assurance:</strong> Fuzz targets, platform/Go-version CI, and documentation-example checks added. Complete documentation programs are compiled; illustrative fragments are syntax-checked.</li>
 </ul>
-<p>The following extensions remain planned; they are not prerequisites for the correctness milestones above and should be scoped separately.</p>
-<ul>
-<li><strong>EXT-6 — Bounded batch processing:</strong> Consider a worker-pool API with bounded concurrency, ordering guarantees, and cancellation behavior for batch workloads.</li>
-<li><strong>EXT-7 — Benchmark-led optimization:</strong> Profile representative workloads before adding pooling, fixed-point arithmetic, SIMD, or other specialized paths. Keep a simple correct fallback.</li>
-<li><strong>EXT-8 — Expanded assurance:</strong> Add fuzzing for malformed image data and options, broader platform/version CI, and automated checks that documentation examples stay compilable.</li>
-</ul>
+<p>The remaining planned work is image watermark support (EXT-4) and additional non-GIF formats (EXT-5); both should be scoped separately.</p>
 <h2 id="5-release-acceptance-gate">5. Release acceptance gate<a class="headerlink" href="#5-release-acceptance-gate" title="Permanent link">&para;</a></h2>
 <p>A release implementing the corrective requirements is ready when all of the following hold:</p>
 <ol>
 <li><code>go build ./...</code> and <code>go test ./...</code> pass.</li>
 <li><code>go test -race ./...</code>, <code>go vet ./...</code>, and the configured linter pass.</li>
 <li>The MkDocs site builds and all example instructions work as written.</li>
-<li>Requirements in sections 3.2–3.8 have regression tests or an explicit documented exception. The CLI requirements in section 3.9 apply to releases that ship the CLI.</li>
+<li>Requirements in sections 3.2–3.8 and 3.10 have regression tests or an explicit documented exception. The CLI requirements in section 3.9 apply to releases that ship the CLI.</li>
 <li>Performance documentation describes measured behavior without unsupported guarantees.</li>
 </ol>
 

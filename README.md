@@ -8,6 +8,8 @@
 
 A fluent, thread-safe Go image processing library with chainable operations.
 
+**Status:** v1.0.0 is the first stable release. See [CHANGELOG.md](CHANGELOG.md) for the release scope and known limitations.
+
 ## Features
 
 - **Fluent Interface**: Chain multiple operations together naturally

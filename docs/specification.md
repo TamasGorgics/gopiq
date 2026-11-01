@@ -1,6 +1,6 @@
 # gopiq Specification
 
-**Status:** Draft implementation target · **Scope:** Correctness, safety, supported formats, concurrency, verification, and planned extensions
+**Status:** Implemented and stable for v1.0.0 · **Scope:** Correctness, safety, supported formats, concurrency, verification, and planned extensions
 
 This document defines the intended behavior of gopiq and the acceptance criteria for fixing the gaps found in the repository audit. “Must” and “must not” are requirements; “should” indicates a recommended implementation choice.
 

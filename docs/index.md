@@ -2,6 +2,8 @@
 
 A fluent, thread-safe Go image processing library with chainable operations.
 
+**Status:** v1.0.0 is the first stable release. See the [changelog](https://github.com/TamasGorgics/gopiq/blob/main/CHANGELOG.md) for the release scope and known limitations.
+
 [![Go](https://github.com/TamasGorgics/gopiq/actions/workflows/go.yml/badge.svg)](https://github.com/TamasGorgics/gopiq/actions/workflows/go.yml)
 [![codecov](https://codecov.io/gh/TamasGorgics/gopiq/branch/main/graph/badge.svg)](https://codecov.io/gh/TamasGorgics/gopiq)
 [![Go Version](https://img.shields.io/badge/Go-1.27-blue.svg)](https://golang.org)

@@ -25,10 +25,10 @@ jobs:
           - os: windows-latest
             go: "1.27.3"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
         go-version: ${{ matrix.go }}
 
@@ -40,7 +40,7 @@ jobs:
 
     - name: Lint
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.3'
-      uses: golangci/golangci-lint-action@v8
+      uses: golangci/golangci-lint-action@v9
       with:
         version: v2.15.0
 
@@ -68,6 +68,6 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.3'
       uses: codecov/codecov-action@v5
       with:
-        file: ./coverage.out
+        files: ./coverage.out
         flags: unittests
         name: codecov-umbrella

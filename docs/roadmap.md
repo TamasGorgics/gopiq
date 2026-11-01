@@ -2,6 +2,8 @@
 
 This roadmap turns the [specification](specification.md) into ordered, verifiable milestones. It is dependency-ordered, not calendar-based; no dates or delivery estimates are implied. Milestones are **Planned** unless marked **Complete**.
 
+**v1.0.0 status:** M0–M8 are complete. The remaining planned work—image watermarks (EXT-4) and non-GIF output formats (EXT-5)—is explicitly outside the v1.0.0 scope.
+
 ## Milestones
 
 ### M0 — Make the repository buildable

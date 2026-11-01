@@ -810,10 +810,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m5-add-streaming-io-and-decode-limits" class="md-nav__link">
+  <a href="#m5-add-a-standalone-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M5 — Add streaming I/O and decode limits
+        M5 — Add a standalone CLI
       
     </span>
   </a>
@@ -821,10 +821,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m6-expand-transformation-and-format-capabilities" class="md-nav__link">
+  <a href="#m6-add-streaming-io-and-decode-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M6 — Expand transformation and format capabilities
+        M6 — Add streaming I/O and decode limits
       
     </span>
   </a>
@@ -832,10 +832,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m7-optimize-measured-workloads-and-support-bounded-batches" class="md-nav__link">
+  <a href="#m7-expand-transformation-and-format-capabilities" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M7 — Optimize measured workloads and support bounded batches
+        M7 — Expand transformation and format capabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#m8-optimize-measured-workloads-and-support-bounded-batches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        M8 — Optimize measured workloads and support bounded batches
       
     </span>
   </a>
@@ -960,10 +971,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m5-add-streaming-io-and-decode-limits" class="md-nav__link">
+  <a href="#m5-add-a-standalone-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M5 — Add streaming I/O and decode limits
+        M5 — Add a standalone CLI
       
     </span>
   </a>
@@ -971,10 +982,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m6-expand-transformation-and-format-capabilities" class="md-nav__link">
+  <a href="#m6-add-streaming-io-and-decode-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M6 — Expand transformation and format capabilities
+        M6 — Add streaming I/O and decode limits
       
     </span>
   </a>
@@ -982,10 +993,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#m7-optimize-measured-workloads-and-support-bounded-batches" class="md-nav__link">
+  <a href="#m7-expand-transformation-and-format-capabilities" class="md-nav__link">
     <span class="md-ellipsis">
       
-        M7 — Optimize measured workloads and support bounded batches
+        M7 — Expand transformation and format capabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#m8-optimize-measured-workloads-and-support-bounded-batches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        M8 — Optimize measured workloads and support bounded batches
       
     </span>
   </a>
@@ -1066,7 +1088,7 @@
 </ul>
 <p><strong>Exit criteria:</strong> The public contract is consistent across code and docs, and <code>go test -race ./...</code> covers the stated concurrency guarantee.</p>
 <h3 id="m4-establish-reliable-quality-gates-and-truthful-performance-docs">M4 — Establish reliable quality gates and truthful performance docs<a class="headerlink" href="#m4-establish-reliable-quality-gates-and-truthful-performance-docs" title="Permanent link">&para;</a></h3>
-<p><strong>Priority:</strong> P1 · <strong>Requirements:</strong> BLD-4, Q-1–Q-6</p>
+<p><strong>Status:</strong> Complete · <strong>Priority:</strong> P1 · <strong>Requirements:</strong> BLD-4, Q-1–Q-6</p>
 <ul>
 <li>Move timing comparisons out of regular tests and into benchmarks or a separately invoked tool.</li>
 <li>Decide whether the unused RGBA pool is worth implementing; remove it and its claims if measurements do not support it.</li>
@@ -1075,7 +1097,17 @@
 <li>Run build, tests, race detection, vet, lint, and documentation build in CI; retain Go 1.27.0 as the declared minimum unless the policy is deliberately changed.</li>
 </ul>
 <p><strong>Exit criteria:</strong> Ordinary tests are correctness-focused and stable across machines; all release-gate checks in the specification pass.</p>
-<h3 id="m5-add-streaming-io-and-decode-limits">M5 — Add streaming I/O and decode limits<a class="headerlink" href="#m5-add-streaming-io-and-decode-limits" title="Permanent link">&para;</a></h3>
+<h3 id="m5-add-a-standalone-cli">M5 — Add a standalone CLI<a class="headerlink" href="#m5-add-a-standalone-cli" title="Permanent link">&para;</a></h3>
+<p><strong>Priority:</strong> P2 · <strong>Requirements:</strong> CLI-1–CLI-5</p>
+<ul>
+<li>Add a thin <code>cmd/gopiq</code> entry point and testable command logic under <code>internal/cli</code>.</li>
+<li>Implement <code>convert</code>, <code>resize</code>, <code>crop</code>, <code>grayscale</code>, and <code>watermark</code> commands with help and version output.</li>
+<li>Support file and standard input/output, format inference and <code>--format</code>, clear GIF-output errors, documented exit codes, and safe output writes.</li>
+<li>Add command integration tests, CLI documentation, Makefile build/install targets, and coverage reporting for the CLI package.</li>
+<li>Keep the CLI dependent only on the public root package; do not import <code>internal/engine</code> directly.</li>
+</ul>
+<p><strong>Exit criteria:</strong> The CLI builds and installs, every command and documented flag is covered by tests, format and exit-code behavior matches the specification, CLI documentation is published, and CI passes.</p>
+<h3 id="m6-add-streaming-io-and-decode-limits">M6 — Add streaming I/O and decode limits<a class="headerlink" href="#m6-add-streaming-io-and-decode-limits" title="Permanent link">&para;</a></h3>
 <p><strong>Priority:</strong> P2 · <strong>Requirements:</strong> EXT-1, EXT-2</p>
 <ul>
 <li>Design reader-based construction and writer-based encoding while keeping <code>FromBytes</code> and <code>ToBytes</code> compatible.</li>
@@ -1083,7 +1115,7 @@
 <li>Document defaults, limit errors, ownership, and resource behavior.</li>
 </ul>
 <p><strong>Exit criteria:</strong> Streaming callers avoid mandatory full encoded-buffer copies, and configured decode limits are enforced by tests including oversized and malformed inputs.</p>
-<h3 id="m6-expand-transformation-and-format-capabilities">M6 — Expand transformation and format capabilities<a class="headerlink" href="#m6-expand-transformation-and-format-capabilities" title="Permanent link">&para;</a></h3>
+<h3 id="m7-expand-transformation-and-format-capabilities">M7 — Expand transformation and format capabilities<a class="headerlink" href="#m7-expand-transformation-and-format-capabilities" title="Permanent link">&para;</a></h3>
 <p><strong>Priority:</strong> P2 · <strong>Requirements:</strong> EXT-3–EXT-5</p>
 <ul>
 <li>Specify proportional resize fit/fill behavior, including rounding, crop, and upscaling rules.</li>
@@ -1091,7 +1123,7 @@
 <li>Assess additional formats independently; implement GIF output only after choosing and documenting palette quantization.</li>
 </ul>
 <p><strong>Exit criteria:</strong> Each selected feature has a written API contract, pixel-level tests, and documentation before implementation is considered complete.</p>
-<h3 id="m7-optimize-measured-workloads-and-support-bounded-batches">M7 — Optimize measured workloads and support bounded batches<a class="headerlink" href="#m7-optimize-measured-workloads-and-support-bounded-batches" title="Permanent link">&para;</a></h3>
+<h3 id="m8-optimize-measured-workloads-and-support-bounded-batches">M8 — Optimize measured workloads and support bounded batches<a class="headerlink" href="#m8-optimize-measured-workloads-and-support-bounded-batches" title="Permanent link">&para;</a></h3>
 <p><strong>Priority:</strong> P3 · <strong>Requirements:</strong> EXT-6–EXT-8</p>
 <ul>
 <li>Benchmark representative image sizes and processor counts; tune parallel thresholds based on reproducible results.</li>

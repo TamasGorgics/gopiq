@@ -839,6 +839,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#39-command-line-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.9 Command-line interface
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1049,6 +1060,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#39-command-line-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.9 Command-line interface
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1107,15 +1129,15 @@
 </ul>
 <p>The Go 1.27.0 minimum is part of this specification. The CI matrix checks that minimum and the latest supported Go 1.27 patch release.</p>
 <h2 id="2-audit-baseline-and-resolution-status">2. Audit baseline and resolution status<a class="headerlink" href="#2-audit-baseline-and-resolution-status" title="Permanent link">&para;</a></h2>
-<p>The initial audit found the following gaps. M0–M3 have resolved the first five listed items; the remaining two are assigned to M4.</p>
+<p>The initial audit found the following gaps. M0–M4 have resolved all listed items.</p>
 <ul>
 <li><strong>Resolved in M0:</strong> Standalone examples previously redeclared <code>main</code> in one package, breaking <code>go build ./...</code> and <code>go test ./...</code>; they now build independently.</li>
 <li><strong>Resolved in M1:</strong> Parallel grayscale previously mishandled non-zero-origin bounds, and empty images or unsafe dimensions could reach invalid operations.</li>
 <li><strong>Resolved in M2:</strong> <code>WithFontPath</code> previously had no effect; font-source ordering and option validation are now implemented.</li>
 <li><strong>Resolved in M2:</strong> GIF was described as decodable but its decoder was not registered by the library.</li>
 <li><strong>Resolved in M3:</strong> <code>Clone</code> is now documented and tested as a shallow copy, and the concurrency contract covers per-call synchronization, non-atomic chains, and read-only images.</li>
-<li><strong>Open for M4:</strong> The RGBA pool is not used by processing operations, and current performance documentation makes pooling/SIMD claims the implementation does not substantiate.</li>
-<li><strong>Open for M4:</strong> <code>TestPerformanceComparison</code> performs timing work as a regular test despite having no performance assertion.</li>
+<li><strong>Resolved in M4:</strong> The unused RGBA pool and unsupported pooling/SIMD claims were removed; performance documentation now reports measured benchmarks with environment and workload details.</li>
+<li><strong>Resolved in M4:</strong> Timing comparisons were removed from ordinary tests and performance measurement now lives in benchmarks.</li>
 </ul>
 <h2 id="3-requirements">3. Requirements<a class="headerlink" href="#3-requirements" title="Permanent link">&para;</a></h2>
 <h3 id="31-build-examples-and-documentation">3.1 Build, examples, and documentation<a class="headerlink" href="#31-build-examples-and-documentation" title="Permanent link">&para;</a></h3>
@@ -1182,6 +1204,14 @@
 <li><strong>Q-5:</strong> Pooling or SIMD optimizations may be claimed only when the implementation uses them and reproducible benchmarks demonstrate a benefit. Otherwise, unused pool code and unsupported claims should be removed.</li>
 <li><strong>Q-6:</strong> The supported Go-version policy must be explicit. CI must test the module's declared minimum (currently Go 1.27.0) and the latest supported stable patch release in that Go line.</li>
 </ul>
+<h3 id="39-command-line-interface">3.9 Command-line interface<a class="headerlink" href="#39-command-line-interface" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CLI-1:</strong> The module must provide a <code>cmd/gopiq</code> main package that builds with <code>go build ./cmd/gopiq</code> and installs with <code>go install github.com/TamasGorgics/gopiq/cmd/gopiq@latest</code>. Command parsing and execution logic must live in a testable internal package rather than in <code>main</code>.</li>
+<li><strong>CLI-2:</strong> The CLI must provide documented <code>convert</code>, <code>resize</code>, <code>crop</code>, <code>grayscale</code>, and <code>watermark</code> commands, plus help and version output. Required arguments, optional flags, and operation semantics must match the public library API.</li>
+<li><strong>CLI-3:</strong> The CLI must read input from a file or standard input and write output to a file or standard output. Output format is inferred from the destination extension when possible and may be overridden with <code>--format</code>. JPEG, PNG, and GIF input are supported; JPEG and PNG output are supported; GIF output must return a clear unsupported error.</li>
+<li><strong>CLI-4:</strong> Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.</li>
+<li><strong>CLI-5:</strong> The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, unsupported GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.</li>
+</ul>
 <h2 id="4-planned-extensions">4. Planned extensions<a class="headerlink" href="#4-planned-extensions" title="Permanent link">&para;</a></h2>
 <p>These are not prerequisites for the correctness milestones above; they are future capabilities to consider and scope separately.</p>
 <ul>
@@ -1200,7 +1230,7 @@
 <li><code>go build ./...</code> and <code>go test ./...</code> pass.</li>
 <li><code>go test -race ./...</code>, <code>go vet ./...</code>, and the configured linter pass.</li>
 <li>The MkDocs site builds and all example instructions work as written.</li>
-<li>Requirements in sections 3.2–3.8 have regression tests or an explicit documented exception.</li>
+<li>Requirements in sections 3.2–3.8 have regression tests or an explicit documented exception. The CLI requirements in section 3.9 apply to releases that ship the CLI.</li>
 <li>Performance documentation describes measured behavior without unsupported guarantees.</li>
 </ol>
 

@@ -281,6 +281,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../streaming/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Streaming & Limits
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../performance/" class="md-tabs__link">
         
   
@@ -602,6 +621,33 @@
     
   
     CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming & Limits
   
 
     
@@ -1154,7 +1200,7 @@
 </ul>
 <p><strong>Exit criteria:</strong> The CLI builds and installs, every command and documented flag is covered by tests, format and exit-code behavior matches the specification, CLI documentation is published, and CI passes.</p>
 <h3 id="m6-add-streaming-io-and-decode-limits">M6 — Add streaming I/O and decode limits<a class="headerlink" href="#m6-add-streaming-io-and-decode-limits" title="Permanent link">&para;</a></h3>
-<p><strong>Priority:</strong> P2 · <strong>Requirements:</strong> EXT-1, EXT-2</p>
+<p><strong>Status:</strong> Complete · <strong>Priority:</strong> P2 · <strong>Requirements:</strong> EXT-1, EXT-2</p>
 <ul>
 <li>Design reader-based construction and writer-based encoding while keeping <code>FromBytes</code> and <code>ToBytes</code> compatible.</li>
 <li>Add configurable encoded-size, dimension, and total-pixel limits, validating before full decode where possible.</li>

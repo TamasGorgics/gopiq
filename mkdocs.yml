@@ -42,6 +42,7 @@ nav:
     - 'Processing Operations': 'api/operations.md'
     - 'Watermark Options': 'api/watermark.md'
   - 'CLI': 'cli.md'
+  - 'Streaming & Limits': 'streaming.md'
   - 'Performance': 'performance.md'
   - 'Concurrency': 'concurrency.md'
   - 'Architecture': 'architecture.md'

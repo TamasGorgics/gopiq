@@ -285,6 +285,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../../streaming/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Streaming & Limits
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../../performance/" class="md-tabs__link">
         
   
@@ -638,6 +657,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../../streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming & Limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../performance/" class="md-nav__link">
         
   
@@ -805,14 +851,19 @@
 <p>This section covers the core methods for creating and managing <code>ImageProcessor</code> instances.</p>
 <ul>
 <li><code>New(img image.Image) *ImageProcessor</code> - Create processor from image; the image is retained, not copied</li>
-<li><code>FromBytes(data []byte) *ImageProcessor</code> - Decode JPEG, PNG, or GIF bytes into a processor</li>
+<li><code>FromBytes(data []byte) *ImageProcessor</code> - Decode JPEG, PNG, or GIF bytes using legacy unlimited decoding</li>
+<li><code>FromBytesWithLimits(data []byte, limits DecodeLimits) *ImageProcessor</code> - Decode bytes with explicit limits</li>
+<li><code>FromReader(r io.Reader) *ImageProcessor</code> - Decode from a reader using <code>DefaultDecodeLimits</code></li>
+<li><code>FromReaderWithLimits(r io.Reader, limits DecodeLimits) *ImageProcessor</code> - Decode from a reader with explicit limits</li>
 <li><code>Clone() *ImageProcessor</code> - Create a shallow processor copy; error and performance state are copied, image storage is shared</li>
 <li><code>Image() (image.Image, error)</code> - Get the current image for reading</li>
-<li><code>ToBytes(format ImageFormat) ([]byte, error)</code> - Export to bytes</li>
+<li><code>ToBytes(format ImageFormat) ([]byte, error)</code> - Export to an in-memory byte slice</li>
+<li><code>ToWriter(w io.Writer, format ImageFormat) error</code> - Encode directly to a writer</li>
 <li><code>Err() error</code> - Get any error from the processing chain</li>
 </ul>
 <p>Methods are individually synchronized, but a multi-call chain is not atomic. Images passed to <code>New</code> and images returned by <code>Image</code> must be treated as read-only while the processor or its clones may be used concurrently. <code>Clone</code> does not deep-copy pixels.</p>
-<p><code>ToBytes</code> supports JPEG and PNG output. GIF is decode-only; attempting to encode GIF returns an error.</p>
+<p><code>ToBytes</code> and <code>ToWriter</code> support JPEG and PNG output. GIF is decode-only; attempting to encode GIF returns an error.</p>
+<p>See <a href="../../streaming/">Streaming and Decode Limits</a> for <code>DecodeLimits</code>, <code>DefaultDecodeLimits</code>, <code>ErrDecodeLimit</code>, ownership, and writer error behavior.</p>
 
 
 

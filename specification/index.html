@@ -283,6 +283,25 @@
   
   
     <li class="md-tabs__item">
+      <a href="../streaming/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Streaming & Limits
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../performance/" class="md-tabs__link">
         
   
@@ -623,6 +642,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../streaming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming & Limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../performance/" class="md-nav__link">
         
   
@@ -902,10 +948,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-planned-extensions" class="md-nav__link">
+  <a href="#4-extensions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Planned extensions
+        4. Extensions
       
     </span>
   </a>
@@ -1123,10 +1169,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-planned-extensions" class="md-nav__link">
+  <a href="#4-extensions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Planned extensions
+        4. Extensions
       
     </span>
   </a>
@@ -1229,7 +1275,7 @@
 <li><strong>SAFE-1:</strong> Chainable operations preserve the first error and do not continue processing after it. Export methods return that error.</li>
 <li><strong>SAFE-2:</strong> Crop arithmetic and image-buffer size calculations must be checked for integer overflow before use or allocation.</li>
 <li><strong>SAFE-3:</strong> Invalid dimensions and configuration must return errors through the existing API. The library is not required to recover from operating-system out-of-memory termination.</li>
-<li><strong>SAFE-4:</strong> Decoding limits for encoded bytes, dimensions, and total pixels are a planned extension; callers must not be told that untrusted input is resource-bounded until those limits exist.</li>
+<li><strong>SAFE-4:</strong> Decode limits for encoded bytes, dimensions, and total pixels are available through <code>DecodeLimits</code>. <code>FromReader</code> applies <code>DefaultDecodeLimits</code>; <code>FromBytes</code> retains legacy unlimited behavior. Callers handling untrusted input must choose limits explicitly and must not assume <code>FromBytes</code> is resource-bounded by default.</li>
 </ul>
 <h3 id="37-concurrency-and-cloning-contract">3.7 Concurrency and cloning contract<a class="headerlink" href="#37-concurrency-and-cloning-contract" title="Permanent link">&para;</a></h3>
 <p>To preserve current behavior and avoid an implicit full-image copy, the v1 <code>Clone</code> contract is <strong>shallow</strong>:</p>
@@ -1258,11 +1304,14 @@
 <li><strong>CLI-4:</strong> Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.</li>
 <li><strong>CLI-5:</strong> The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, unsupported GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.</li>
 </ul>
-<h2 id="4-planned-extensions">4. Planned extensions<a class="headerlink" href="#4-planned-extensions" title="Permanent link">&para;</a></h2>
-<p>These are not prerequisites for the correctness milestones above; they are future capabilities to consider and scope separately.</p>
+<h2 id="4-extensions">4. Extensions<a class="headerlink" href="#4-extensions" title="Permanent link">&para;</a></h2>
+<p>The following extensions were implemented in M6 and are documented in <a href="../streaming/">Streaming and Decode Limits</a>:</p>
 <ul>
-<li><strong>EXT-1 — Streaming I/O:</strong> Add reader-based construction and writer-based encoding so callers need not hold the entire encoded image in a byte slice. Existing byte APIs remain supported wrappers.</li>
-<li><strong>EXT-2 — Decode limits:</strong> Add configurable limits for encoded input size, width, height, and total pixels, with validation before full decode where possible.</li>
+<li><strong>EXT-1 — Streaming I/O:</strong> Implemented through <code>FromReader</code> and <code>ToWriter</code>; existing byte APIs remain supported.</li>
+<li><strong>EXT-2 — Decode limits:</strong> Implemented through <code>DecodeLimits</code>, with encoded-size and dimension validation.</li>
+</ul>
+<p>The following extensions remain planned; they are not prerequisites for the correctness milestones above and should be scoped separately.</p>
+<ul>
 <li><strong>EXT-3 — Aspect-ratio operations:</strong> Add explicit fit/fill or proportional-resize APIs with documented rounding, cropping, and upscaling behavior.</li>
 <li><strong>EXT-4 — Additional operations:</strong> Consider rotation, flips, and image watermarks with clear bounds, anchor, and alpha-compositing behavior.</li>
 <li><strong>EXT-5 — Additional formats:</strong> Consider GIF encoding only with an explicit quantization policy; assess additional formats and dependencies independently.</li>

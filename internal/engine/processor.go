@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"io"
 	"sync"
 )
 
@@ -34,12 +35,29 @@ func NewUninitialized(opts Options) *Processor {
 	return &Processor{options: opts}
 }
 
-// FromBytes decodes an image from a byte slice.
+// FromBytes decodes an image from a byte slice without decode limits.
 func FromBytes(data []byte, opts Options) *Processor {
+	return FromBytesWithLimits(data, DecodeLimits{}, opts)
+}
+
+// FromBytesWithLimits decodes an image from a byte slice with decode limits.
+func FromBytesWithLimits(data []byte, limits DecodeLimits, opts Options) *Processor {
 	if len(data) == 0 {
 		return &Processor{err: fmt.Errorf("input byte slice is empty")}
 	}
-	img, err := decodeImage(bytes.NewReader(data))
+	if limits.MaxEncodedBytes > 0 && int64(len(data)) > limits.MaxEncodedBytes {
+		return &Processor{err: encodedLimitError(limits.MaxEncodedBytes)}
+	}
+	return FromReader(bytes.NewReader(data), limits, opts)
+}
+
+// FromReader decodes an image from a reader with decode limits.
+// The reader is consumed but not closed.
+func FromReader(r io.Reader, limits DecodeLimits, opts Options) *Processor {
+	if r == nil {
+		return &Processor{err: fmt.Errorf("reader cannot be nil")}
+	}
+	img, err := decodeImageWithLimits(r, limits)
 	if err != nil {
 		return &Processor{err: err}
 	}
@@ -81,6 +99,26 @@ func (p *Processor) ToBytes(format Format) ([]byte, error) {
 		return nil, fmt.Errorf("failed to encode image to bytes: %w", err)
 	}
 	return buf.Bytes(), nil
+}
+
+// ToWriter encodes the current image directly to a writer.
+func (p *Processor) ToWriter(w io.Writer, format Format) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if p.err != nil {
+		return p.err
+	}
+	if p.currentImage == nil {
+		return fmt.Errorf("no image available to encode")
+	}
+	if w == nil {
+		return fmt.Errorf("writer cannot be nil")
+	}
+	if err := encodeImage(w, p.currentImage, format); err != nil {
+		return fmt.Errorf("failed to encode image: %w", err)
+	}
+	return nil
 }
 
 // Image returns the current image and chain error.

@@ -8,6 +8,7 @@ package gopiq
 import (
 	"fmt"
 	"image"
+	"io"
 	"sync"
 
 	"github.com/TamasGorgics/gopiq/internal/engine"
@@ -70,6 +71,8 @@ func (p *ImageProcessor) SetPerformanceOptions(opts PerformanceOptions) *ImagePr
 
 // FromBytes creates a new ImageProcessor by decoding an image from a byte slice.
 // It supports JPEG, PNG, and GIF formats. Returns an error if decoding fails.
+// FromBytes retains legacy unlimited decoding; use FromBytesWithLimits for
+// untrusted or size-constrained input.
 func FromBytes(data []byte) *ImageProcessor {
 	return &ImageProcessor{
 		core: engine.FromBytes(data, engine.DefaultOptions()),
@@ -86,6 +89,19 @@ func (p *ImageProcessor) ToBytes(format ImageFormat) ([]byte, error) {
 		return nil, fmt.Errorf("no image available to convert to bytes")
 	}
 	return core.ToBytes(toEngineFormat(format))
+}
+
+// ToWriter encodes the current image directly to w in the specified format.
+// It supports FormatJPEG and FormatPNG; FormatGIF is decode-only. The writer
+// is not closed. A write failure may leave partially written output; use
+// ToBytes if an in-memory result is required.
+// This method is safe for concurrent use.
+func (p *ImageProcessor) ToWriter(w io.Writer, format ImageFormat) error {
+	core := p.processor()
+	if core == nil {
+		return fmt.Errorf("no image available to encode")
+	}
+	return core.ToWriter(w, toEngineFormat(format))
 }
 
 // Image returns the current image.Image and any error encountered in the processing chain.

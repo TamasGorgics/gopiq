@@ -73,7 +73,7 @@ The initial audit found the following gaps. M0–M4 have resolved all listed ite
 - **SAFE-1:** Chainable operations preserve the first error and do not continue processing after it. Export methods return that error.
 - **SAFE-2:** Crop arithmetic and image-buffer size calculations must be checked for integer overflow before use or allocation.
 - **SAFE-3:** Invalid dimensions and configuration must return errors through the existing API. The library is not required to recover from operating-system out-of-memory termination.
-- **SAFE-4:** Decoding limits for encoded bytes, dimensions, and total pixels are a planned extension; callers must not be told that untrusted input is resource-bounded until those limits exist.
+- **SAFE-4:** Decode limits for encoded bytes, dimensions, and total pixels are available through `DecodeLimits`. `FromReader` applies `DefaultDecodeLimits`; `FromBytes` retains legacy unlimited behavior. Callers handling untrusted input must choose limits explicitly and must not assume `FromBytes` is resource-bounded by default.
 
 ### 3.7 Concurrency and cloning contract
 
@@ -104,12 +104,15 @@ If independent pixel storage is later needed, it should be provided by an explic
 - **CLI-4:** Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.
 - **CLI-5:** The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, unsupported GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.
 
-## 4. Planned extensions
+## 4. Extensions
 
-These are not prerequisites for the correctness milestones above; they are future capabilities to consider and scope separately.
+The following extensions were implemented in M6 and are documented in [Streaming and Decode Limits](streaming.md):
 
-- **EXT-1 — Streaming I/O:** Add reader-based construction and writer-based encoding so callers need not hold the entire encoded image in a byte slice. Existing byte APIs remain supported wrappers.
-- **EXT-2 — Decode limits:** Add configurable limits for encoded input size, width, height, and total pixels, with validation before full decode where possible.
+- **EXT-1 — Streaming I/O:** Implemented through `FromReader` and `ToWriter`; existing byte APIs remain supported.
+- **EXT-2 — Decode limits:** Implemented through `DecodeLimits`, with encoded-size and dimension validation.
+
+The following extensions remain planned; they are not prerequisites for the correctness milestones above and should be scoped separately.
+
 - **EXT-3 — Aspect-ratio operations:** Add explicit fit/fill or proportional-resize APIs with documented rounding, cropping, and upscaling behavior.
 - **EXT-4 — Additional operations:** Consider rotation, flips, and image watermarks with clear bounds, anchor, and alpha-compositing behavior.
 - **EXT-5 — Additional formats:** Consider GIF encoding only with an explicit quantization policy; assess additional formats and dependencies independently.

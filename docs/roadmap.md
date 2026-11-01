@@ -75,7 +75,7 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M6 — Add streaming I/O and decode limits
 
-**Priority:** P2 · **Requirements:** EXT-1, EXT-2
+**Status:** Complete · **Priority:** P2 · **Requirements:** EXT-1, EXT-2
 
 - Design reader-based construction and writer-based encoding while keeping `FromBytes` and `ToBytes` compatible.
 - Add configurable encoded-size, dimension, and total-pixel limits, validating before full decode where possible.

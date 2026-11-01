@@ -16,6 +16,7 @@ A fluent, thread-safe Go image processing library with chainable operations.
 - **Comprehensive Error Handling**: Errors propagate through the chain
 - **Multiple Format Support**: JPEG and PNG input/output; GIF input (decode-only)
 - **Text Watermarks**: Add customizable text overlays with font control
+- **Streaming I/O and Decode Limits**: Decode from readers, encode to writers, and bound untrusted input
 - **Standalone CLI**: Run common operations without writing Go code
 
 ## Installation

@@ -95,12 +95,12 @@ This roadmap turns the [specification](specification.md) into ordered, verifiabl
 
 ### M8 — Optimize measured workloads and support bounded batches
 
-**Priority:** P3 · **Requirements:** EXT-6–EXT-8
+**Status:** Complete · **Priority:** P3 · **Requirements:** EXT-6–EXT-8
 
-- Benchmark representative image sizes and processor counts; tune parallel thresholds based on reproducible results.
-- Consider pooling, fixed-point arithmetic, SIMD, or other specialized paths only when profiling justifies them.
-- Design bounded batch processing with explicit ordering, concurrency, and cancellation semantics.
-- Expand fuzz, platform, and Go-version coverage according to the declared support policy.
+- Add `ProcessBatch` with bounded workers, ordered results, per-item errors, and context cancellation.
+- Benchmark representative image sizes and processor counts; document the selected defaults and evaluate specialized paths.
+- Keep pooling, fixed-point arithmetic, and SIMD out unless measurements justify them.
+- Expand fuzz, platform, and Go-version coverage and add documentation-example checks.
 
 **Exit criteria:** Optimizations show a repeatable benefit without changing specified output semantics, and batch/resource behavior is bounded and tested.
 

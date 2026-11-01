@@ -106,21 +106,27 @@ If independent pixel storage is later needed, it should be provided by an explic
 - **CLI-4:** Usage and flag errors must return exit code 2; input, processing, encoding, and write errors must return exit code 1; success, help, and version output must return exit code 0. Errors must be written to standard error. Failed output writes must not leave a truncated destination when an atomic write can be used.
 - **CLI-5:** The CLI must use only the supported root package and the standard library, not the internal engine directly. Tests must cover every command, format inference and overrides, standard input/output, invalid arguments, GIF output, exit codes, and output-write failure behavior; CLI usage must be documented in the MkDocs site and linked from the README.
 
+### 3.10 Bounded batch processing
+
+- **BATCH-1:** `ProcessBatch` must process independent images with a bounded worker count and return results indexed by input position.
+- **BATCH-2:** Input images are read-only; each callback receives a separate processor. Per-image processing errors remain on the corresponding result and do not stop unrelated items.
+- **BATCH-3:** Cancellation must stop scheduling new items, wait for in-flight operations, return completed partial results, leave unstarted slots nil, and return `ctx.Err()`.
+- **BATCH-4:** A nil context or operation must return an error; empty input returns an empty result slice and no error. `MaxWorkers <= 0` uses the runtime default and is capped by the input count.
+
 ## 4. Extensions
 
-The following extensions were implemented in M6–M7:
+The following extensions were implemented in M6–M8:
 
 - **EXT-1 — Streaming I/O:** Implemented through `FromReader` and `ToWriter`; existing byte APIs remain supported.
 - **EXT-2 — Decode limits:** Implemented through `DecodeLimits`, with encoded-size and dimension validation.
 - **EXT-3 — Aspect-ratio operations:** Implemented through `ResizeFit` and `ResizeFill`; see IMG-6.
 - **EXT-4 — Additional operations:** Flips and 90-degree rotations implemented; image watermarks remain planned.
 - **EXT-5 — Additional formats:** Single-frame GIF output implemented with the FMT-3 policy; other formats remain planned.
+- **EXT-6 — Bounded batch processing:** Implemented through `ProcessBatch`, with ordered results, bounded workers, and cancellation.
+- **EXT-7 — Benchmark-led optimization:** Representative workloads benchmarked; no specialized pooling, SIMD, or fixed-point paths selected.
+- **EXT-8 — Expanded assurance:** Fuzz targets, platform/Go-version CI, and documentation-example checks added. Complete documentation programs are compiled; illustrative fragments are syntax-checked.
 
-The following extensions remain planned; they are not prerequisites for the correctness milestones above and should be scoped separately.
-
-- **EXT-6 — Bounded batch processing:** Consider a worker-pool API with bounded concurrency, ordering guarantees, and cancellation behavior for batch workloads.
-- **EXT-7 — Benchmark-led optimization:** Profile representative workloads before adding pooling, fixed-point arithmetic, SIMD, or other specialized paths. Keep a simple correct fallback.
-- **EXT-8 — Expanded assurance:** Add fuzzing for malformed image data and options, broader platform/version CI, and automated checks that documentation examples stay compilable.
+The remaining planned work is image watermark support (EXT-4) and additional non-GIF formats (EXT-5); both should be scoped separately.
 
 ## 5. Release acceptance gate
 
@@ -129,5 +135,5 @@ A release implementing the corrective requirements is ready when all of the foll
 1. `go build ./...` and `go test ./...` pass.
 2. `go test -race ./...`, `go vet ./...`, and the configured linter pass.
 3. The MkDocs site builds and all example instructions work as written.
-4. Requirements in sections 3.2–3.8 have regression tests or an explicit documented exception. The CLI requirements in section 3.9 apply to releases that ship the CLI.
+4. Requirements in sections 3.2–3.8 and 3.10 have regression tests or an explicit documented exception. The CLI requirements in section 3.9 apply to releases that ship the CLI.
 5. Performance documentation describes measured behavior without unsupported guarantees.

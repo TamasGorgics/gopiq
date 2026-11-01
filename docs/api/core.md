@@ -7,6 +7,7 @@ This section covers the core methods for creating and managing `ImageProcessor` 
 - `FromBytesWithLimits(data []byte, limits DecodeLimits) *ImageProcessor` - Decode bytes with explicit limits
 - `FromReader(r io.Reader) *ImageProcessor` - Decode from a reader using `DefaultDecodeLimits`
 - `FromReaderWithLimits(r io.Reader, limits DecodeLimits) *ImageProcessor` - Decode from a reader with explicit limits
+- `ProcessBatch(ctx context.Context, images []image.Image, operation func(*ImageProcessor) *ImageProcessor, options BatchOptions) ([]*ImageProcessor, error)` - Process images with bounded concurrency and ordered results
 - `Clone() *ImageProcessor` - Create a shallow processor copy; error and performance state are copied, image storage is shared
 - `Image() (image.Image, error)` - Get the current image for reading
 - `ToBytes(format ImageFormat) ([]byte, error)` - Export to an in-memory byte slice
@@ -17,4 +18,4 @@ Methods are individually synchronized, but a multi-call chain is not atomic. Ima
 
 `ToBytes` and `ToWriter` support JPEG, PNG, and GIF output. GIF output uses the Go standard-library Plan 9 palette, Floyd–Steinberg dithering, white alpha flattening, and a single frame.
 
-See [Streaming and Decode Limits](../streaming.md) for `DecodeLimits`, `DefaultDecodeLimits`, `ErrDecodeLimit`, ownership, and writer error behavior.
+See [Streaming and Decode Limits](../streaming.md) for `DecodeLimits`, `DefaultDecodeLimits`, `ErrDecodeLimit`, ownership, and writer error behavior. See [Batch Processing](../batch.md) for ordered results, bounded workers, cancellation, and per-item errors.

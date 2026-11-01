@@ -12,10 +12,18 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        go: ["1.27.0", "1.27.3"]
+        include:
+          - os: ubuntu-latest
+            go: "1.27.0"
+          - os: ubuntu-latest
+            go: "1.27.3"
+          - os: macos-latest
+            go: "1.27.3"
+          - os: windows-latest
+            go: "1.27.3"
     steps:
     - uses: actions/checkout@v4
 
@@ -31,16 +39,33 @@ jobs:
       run: go vet ./...
 
     - name: Lint
-      if: matrix.go == '1.27.3'
+      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.3'
       uses: golangci/golangci-lint-action@v8
       with:
         version: v2.15.0
 
     - name: Test and collect library coverage
+      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.3'
       run: go test -v -race -coverprofile=coverage.out -covermode=atomic -coverpkg=github.com/TamasGorgics/gopiq,github.com/TamasGorgics/gopiq/internal/engine,github.com/TamasGorgics/gopiq/internal/cli ./...
 
+    - name: Test with race
+      if: matrix.os == 'ubuntu-latest' && matrix.go != '1.27.3'
+      run: go test -v -race ./...
+
+    - name: Test
+      if: matrix.os != 'ubuntu-latest'
+      run: go test -v ./...
+
+    - name: Fuzz decode limits
+      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.3'
+      run: go test -run '^$' -fuzz=FuzzFromReaderWithLimits -fuzztime=10s .
+
+    - name: Fuzz byte limits
+      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.3'
+      run: go test -run '^$' -fuzz=FuzzFromBytesWithLimits -fuzztime=10s .
+
     - name: Upload coverage to Codecov
-      if: matrix.go == '1.27.3'
+      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.3'
       uses: codecov/codecov-action@v5
       with:
         file: ./coverage.out

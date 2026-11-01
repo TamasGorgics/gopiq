@@ -43,6 +43,7 @@ nav:
     - 'Watermark Options': 'api/watermark.md'
   - 'CLI': 'cli.md'
   - 'Streaming & Limits': 'streaming.md'
+  - 'Batch Processing': 'batch.md'
   - 'Performance': 'performance.md'
   - 'Concurrency': 'concurrency.md'
   - 'Architecture': 'architecture.md'

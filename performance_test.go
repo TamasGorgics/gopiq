@@ -1,6 +1,7 @@
 package gopiq
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"image/color"
@@ -95,6 +96,41 @@ func BenchmarkGrayscaleXL_Fast(b *testing.B) {
 		b.Skip("Skipping large benchmark in short mode")
 	}
 	benchmarkGrayscaleFast(b, 3840, 2160)
+}
+
+// Benchmark grayscale paths around the default parallel threshold.
+func BenchmarkGrayscaleThreshold(b *testing.B) {
+	for _, size := range []int{32, 64, 96, 100, 128, 256} {
+		b.Run(fmt.Sprintf("%dx%d/optimized", size, size), func(b *testing.B) {
+			benchmarkGrayscaleOptimized(b, size, size)
+		})
+		b.Run(fmt.Sprintf("%dx%d/fast", size, size), func(b *testing.B) {
+			benchmarkGrayscaleFast(b, size, size)
+		})
+	}
+}
+
+// Benchmark bounded batch processing at several worker counts.
+func BenchmarkProcessBatch(b *testing.B) {
+	images := make([]image.Image, 8)
+	for i := range images {
+		images[i] = createLargeTestImage(500, 500)
+	}
+
+	for _, workers := range []int{1, 2, 4, 8} {
+		b.Run(fmt.Sprintf("workers_%d", workers), func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				_, err := ProcessBatch(context.Background(), images, func(processor *ImageProcessor) *ImageProcessor {
+					processor.Grayscale()
+					return processor
+				}, BatchOptions{MaxWorkers: workers})
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
 }
 
 // Benchmark different numbers of goroutines for parallel processing

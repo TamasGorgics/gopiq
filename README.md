@@ -18,6 +18,7 @@ A fluent, thread-safe Go image processing library with chainable operations.
 - **Multiple Format Support**: JPEG, PNG, and GIF input/output; GIF output uses a documented lossy palette policy
 - **Text Watermarks**: Add customizable text overlays with font control
 - **Streaming I/O and Decode Limits**: Decode from readers, encode to writers, and bound untrusted input
+- **Bounded Batch Processing**: Process multiple images with ordered results and cancellation
 - **Standalone CLI**: Use the same operations from the command line
 
 The root `gopiq` package is the supported public API; implementation details live in `internal/engine`. See [Architecture](docs/architecture.md) for the package boundaries and planned CLI layout.
@@ -152,13 +153,14 @@ func processImagesInParallel(images []image.Image) []*gopiq.ImageProcessor {
 - `FromBytesWithLimits(data []byte, limits DecodeLimits) *ImageProcessor` - Decode bytes with explicit limits
 - `FromReader(r io.Reader) *ImageProcessor` - Decode from a reader using `DefaultDecodeLimits`
 - `FromReaderWithLimits(r io.Reader, limits DecodeLimits) *ImageProcessor` - Decode from a reader with explicit limits
+- `ProcessBatch(ctx context.Context, images []image.Image, operation func(*ImageProcessor) *ImageProcessor, options BatchOptions) ([]*ImageProcessor, error)` - Process images with bounded concurrency and ordered results
 - `Clone() *ImageProcessor` - Create a shallow processor copy; image storage is shared
 - `Image() (image.Image, error)` - Get the current image for reading
 - `ToBytes(format ImageFormat) ([]byte, error)` - Export to bytes
 - `ToWriter(w io.Writer, format ImageFormat) error` - Encode directly to a writer
 - `Err() error` - Get any error from the processing chain
 
-`FromBytes` decodes JPEG, PNG, and GIF. `FromReader` and `FromBytesWithLimits` support `DecodeLimits` and `ErrDecodeLimit`; see [Streaming and Decode Limits](docs/streaming.md). `ToBytes` and `ToWriter` encode JPEG, PNG, and GIF; GIF output uses the documented lossy palette policy. `Clone` does not deep-copy pixels, and images passed to `New` or returned by `Image` must not be mutated while processors or clones are in use.
+`FromBytes` decodes JPEG, PNG, and GIF. `FromReader` and `FromBytesWithLimits` support `DecodeLimits` and `ErrDecodeLimit`; see [Streaming and Decode Limits](docs/streaming.md). `ToBytes` and `ToWriter` encode JPEG, PNG, and GIF; GIF output uses the documented lossy palette policy. `ProcessBatch` provides bounded ordered batch processing; see [Batch Processing](docs/batch.md). `Clone` does not deep-copy pixels, and images passed to `New` or returned by `Image` must not be mutated while processors or clones are in use.
 
 ### Processing Operations
 
